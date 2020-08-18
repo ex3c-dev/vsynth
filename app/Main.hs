@@ -1,28 +1,39 @@
 module Main where
-
 import Lib
-import Sound.Pulse.Simple
--- Library collides with many standart function so import it as qualified within namespace B
-import qualified Data.ByteString.Lazy as B
-import qualified Data.ByteString.Builder as B
-import Data.Foldable
+import Control.Concurrent ( threadDelay )
+import Control.Monad ( unless )
+import Data.Maybe ( listToMaybe )
+import System.Environment ( getArgs )
+import Sound.OpenAL
+
+type DeviceSpecifier = Maybe String
+
+showDevice :: DeviceSpecifier -> String
+showDevice Nothing = "default"
+showDevice (Just d) = "'" ++ d ++ "'"
+
+orElse :: IO (Maybe a) -> IO (Maybe a) -> IO (Maybe a)
+orElse f g = f >>= maybe g (return . Just)
+
+check :: String -> IO (Maybe a) -> IO a
+check what f = f >>= maybe (error $ what ++ " failed") return
+
+boolToMaybe :: Bool -> Maybe ()
+boolToMaybe x = if x then Just () else Nothing
+
+getDeviceSpec :: String -> IO [String] -> IO DeviceSpecifier
+getDeviceSpec what getter = do
+   deviceSpecs <- getter
+   unless (null deviceSpecs) $ do
+      putStrLn $ "Found " ++ show (length deviceSpecs) ++ " " ++ what ++ ":"
+      mapM_ (putStrLn . ("   " ++)) deviceSpecs
+   return $ listToMaybe deviceSpecs
 
 main :: IO ()
 main = do
-    s <- simpleNew Nothing "example" Record Nothing "this is an example application"
-        (SampleSpec (F32 LittleEndian) 44100 1) Nothing Nothing
-    xs <- simpleRead s $ 44100*10 :: IO [Float]
-    simpleFree s
-    --print xs
-    B.writeFile "output.bin" $ B.toLazyByteString $ fold $ map B.floatLE xs
-
-volume :: Float
-volume = 0.5
-
--- Create sequence of floats to descripe a sound wave
-wave ::[Float]
-wave = map (* volume) $ map sin $ map (* step) [0.0 .. 48000]
-    where step = 0.01
-
-save :: IO ()
-save = B.writeFile "output.bin" $ B.toLazyByteString $ fold $ map B.floatLE wave
+   d <- getDeviceSpec "commandline arguments" getArgs `orElse`
+        getDeviceSpec "enumerated devices" (get allDeviceSpecifiers)
+   putStrLn $ "Using " ++ showDevice d ++ " device"
+   device <- check "openDevice" $ openDevice d
+   threadDelay 1000000
+   check "closeDevice" $ fmap boolToMaybe $ closeDevice device

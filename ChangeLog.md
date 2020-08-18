@@ -1,3 +1,3 @@
-# Changelog for audiorecorder
+# Changelog for vsynth
 
 ## Unreleased changes
