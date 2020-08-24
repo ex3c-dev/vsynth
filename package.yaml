@@ -22,6 +22,7 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - base >= 4.7 && < 5
 - OpenAL >= 1.7.0.5
+- gtk3 >= 0.15.5
 
 library:
   source-dirs: src

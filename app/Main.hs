@@ -5,6 +5,7 @@ import Control.Monad ( unless )
 import Data.Maybe ( listToMaybe )
 import System.Environment ( getArgs )
 import Sound.OpenAL
+import qualified Graphics.UI.Gtk as Gtk3
 
 type DeviceSpecifier = Maybe String
 
@@ -37,3 +38,25 @@ main = do
    device <- check "openDevice" $ openDevice d
    threadDelay 1000000
    check "closeDevice" $ fmap boolToMaybe $ closeDevice device
+
+   -- Gtk3 Gui
+   Gtk3.initGUI
+   -- Create Window
+   window <- Gtk3.windowNew
+   Gtk3.on window Gtk3.objectDestroy Gtk3.mainQuit
+   Gtk3.set window [ Gtk3.containerBorderWidth Gtk3.:= 10 ]
+   hbuttonbox <- Gtk3.hButtonBoxNew
+   Gtk3.set window [ Gtk3.containerChild Gtk3.:= hbuttonbox ]
+
+   button1 <- Gtk3.buttonNewWithLabel "Save"
+   button2 <- Gtk3.buttonNewWithLabel "Penis"
+
+   Gtk3.set hbuttonbox [ Gtk3.containerChild Gtk3.:= button
+                  | button <- [button1, button2] ]
+
+   Gtk3.set hbuttonbox [ Gtk3.buttonBoxLayoutStyle Gtk3.:= Gtk3.ButtonboxStart
+                       , Gtk3.buttonBoxChildSecondary button2 Gtk3.:= True  ]
+
+   Gtk3.widgetShowAll window
+
+   Gtk3.mainGUI 
