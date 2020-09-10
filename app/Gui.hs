@@ -1,7 +1,13 @@
 module Gui where
 import qualified Graphics.UI.Gtk as Gtk3
 import qualified Data.Text as T
+import Data.Text.Conversions
 import Control.Lens
+import Structures
+import Music
+import Data.Maybe
+
+{-# LANGUAGE OverloadedStrings #-}
 
 data GuiElements = GuiElements {
     _window :: Gtk3.Window,
@@ -22,9 +28,12 @@ window k (GuiElements win hbox che com ent butSave butStart) = (\win' -> GuiElem
 setupComboBox :: Gtk3.ComboBox -> [String] -> [IO Int]
 setupComboBox comboBox strings = map (\x -> Gtk3.comboBoxAppendText comboBox (T.pack x)) strings
 
+addWidgets ::(Gtk3.WidgetClass widgets, Gtk3.ContainerClass container) => [widgets] -> container -> [IO ()]
+addWidgets widgets container = map (\x -> Gtk3.containerAdd (Gtk3.toContainer container) (Gtk3.toWidget x)) widgets
+
 --initialiseGui :: ( String -> IO ) -> String -> IO (GuiElements)
-initialiseGui :: (String -> IO()) -> String -> IO (GuiElements)
-initialiseGui function title = do
+initialiseGui :: ([Progression] -> Key -> Octave -> Int -> Int -> IO ()) -> String -> IO (GuiElements)
+initialiseGui createSheet title = do
     Gtk3.initGUI
 
     -- Create GUI elements
@@ -43,37 +52,27 @@ initialiseGui function title = do
     -- Setup GUI elements
     Gtk3.on window Gtk3.objectDestroy Gtk3.mainQuit
     Gtk3.set window [ Gtk3.containerBorderWidth Gtk3.:= 10, Gtk3.windowTitle Gtk3.:= title ]
+    Gtk3.entrySetText entChord "Enter chord array"
 
     Gtk3.containerAdd vBox hBox2
     Gtk3.containerAdd vBox hBox
     Gtk3.containerAdd vBox hbuttonbox
     Gtk3.containerAdd window vBox
-
-    Gtk3.entrySetText entChord "Enter chord array"
-
-    --Gtk3.comboBoxAppendText comboBox (T.pack "Twelve Bar Blues")
-    --Gtk3.comboBoxAppendText comboBox (T.pack "Axis of Awesome")
-    --Gtk3.comboBoxAppendText comboBox (T.pack "Pessimistic")
-    --Gtk3.comboBoxAppendText comboBox (T.pack "Pop")
-    --Gtk3.comboBoxAppendText comboBox (T.pack "JazzCat")
-    --Gtk3.comboBoxAppendText comboBox (T.pack "Pachelbel")
-    sequence $ setupComboBox comboBox ["Twelve Bar Blues", "Axis of Awesome", "Pessimistic", "Pop", "JazzCat", "Pachelbel"]
-    Gtk3.comboBoxSetActive comboBox 0
-
     Gtk3.containerAdd hBox2 checkCustom
     Gtk3.containerAdd hBox labChord
     Gtk3.containerAdd hBox entChord
     Gtk3.containerAdd hBox comboBox
-
     Gtk3.set hbuttonbox [ Gtk3.containerChild Gtk3.:= button
                           | button <- [button1, button2] ]
-
     Gtk3.set hbuttonbox [ Gtk3.buttonBoxLayoutStyle Gtk3.:= Gtk3.ButtonboxStart
                            , Gtk3.buttonBoxChildSecondary button2 Gtk3.:= True  ]
 
+    sequence $ setupComboBox comboBox ["Twelve Bar Blues", "Axis of Awesome", "Pessimistic", "Pop", "JazzCat", "Pachelbel"]
+    Gtk3.comboBoxSetActive comboBox 0
+
     -- Setup event handlers
     Gtk3.on button1 Gtk3.buttonActivated $ openSelectFolderDialog window
-    Gtk3.on button2 Gtk3.buttonActivated $ onStartButtonClicked comboBox
+    Gtk3.on button2 Gtk3.buttonActivated $ onStartButtonClicked comboBox createSheet
     Gtk3.on checkCustom Gtk3.toggled (onCustomChecked hBox entChord comboBox checkCustom)
 
     -- Finish GUI setup
@@ -81,23 +80,16 @@ initialiseGui function title = do
     Gtk3.containerRemove hBox entChord
     Gtk3.mainGUI
 
-    
-
     let elements = GuiElements {_window = window,_hBox = hBox,_checkCustom = checkCustom, _comboBox = comboBox,_entChord = entChord, _butSave = button1, _butStart = button2}
     return elements
 
-addWidgets ::(Gtk3.WidgetClass widgets, Gtk3.ContainerClass container) => [widgets] -> container -> [IO ()]
-addWidgets widgets container = map (\x -> Gtk3.containerAdd (Gtk3.toContainer container) (Gtk3.toWidget x)) widgets
 
-test :: String -> IO ()
-test message = do
-    putStrLn message
 
 createWindow :: String -> IO ()
 createWindow s = do
-    windowElements <- initialiseGui (test) s
+    --windowElements <- initialiseGui (test) s
     
-    size <- Gtk3.windowGetSize (_window windowElements)
+    --size <- Gtk3.windowGetSize (_window windowElements)
 
     -- Adding listeners after gui creation does not work
     --Gtk3.on (_checkCustom windowElements) Gtk3.toggled (onCustomChecked (_hBox windowElements) (_entChord windowElements) (_comboBox windowElements) (_checkCustom windowElements))
@@ -105,10 +97,28 @@ createWindow s = do
     --Gtk3.on _checkCustom windowElements Gtk3.toggled onCustomChecked
     return ()
 
-onStartButtonClicked :: Gtk3.ComboBox -> IO()
-onStartButtonClicked comboBox = do
-    text <- Gtk3.comboBoxGetActiveText comboBox
-    putStrLn (show text)
+fuckOff :: String -> IO(Maybe T.Text)
+fuckOff text = do return (Just (convertText (text :: String) :: T.Text))
+
+
+onStartButtonClicked :: Gtk3.ComboBox -> ([Progression] -> Key -> Octave -> Int -> Int -> IO ()) -> IO()
+onStartButtonClicked comboBox createSheet = do
+    coText <- Gtk3.comboBoxGetActiveText comboBox
+    let tbb = toText "Twelve Bar Blues"
+    let aoa = toText "Axis of Awesome"
+    let pe = toText "Pessimistic"
+    let pop = toText "Pop"
+    let jc = toText "JazzCat"
+    let pc = toText "Pachelbel"
+    case coText of 
+        Just tbb -> putStrLn "Twelve Bar Blues"
+        Just aoa-> putStrLn "Axis of Awesome"
+        Just pe -> putStrLn "Pessimistic"
+        Just pop-> putStrLn "Pop"
+        Just jc -> putStrLn "JazzCat"
+        Just pc -> putStrLn "Pachelbel"
+    --createSheet axisOfAwesome A octave 4 4
+    putStrLn (show coText)
 
 
 openSelectFolderDialog :: Gtk3.Window -> IO()

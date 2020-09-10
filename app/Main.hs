@@ -32,11 +32,15 @@ import Gui
 main :: IO ()
 main = do
 
-    withProgNameAndArgs runALUT $ \progName args -> do
+    elements <- initialiseGui (createSheet) "VSynth"
+    putStrLn "Bye"
 
-        unless (length args == 1) $ do
-            hPutStrLn stderr ("usage: " ++ progName ++ " <fileName>")
-            exitFailure
-        playFile (head args)
+    --withProgNameAndArgs runALUT $ \progName args -> do
 
-        createSheet axisOfAwesome A octave 4 4
+    --    unless (length args == 1) $ do
+    --        hPutStrLn stderr ("usage: " ++ progName ++ " <fileName>")
+    --        exitFailure
+    --    createSheet axisOfAwesome A octave 4 4
+    --    playFile (head args)
+
+        

@@ -46,6 +46,7 @@ library
     , random >=1.1
     , split >=0.2.3.4
     , text >=1.2.4.0
+    , text-conversions >=0.3.0
   default-language: Haskell2010
 
 executable vsynth-exe
@@ -77,6 +78,7 @@ executable vsynth-exe
     , random >=1.1
     , split >=0.2.3.4
     , text >=1.2.4.0
+    , text-conversions >=0.3.0
     , vsynth
   default-language: Haskell2010
 
@@ -104,5 +106,6 @@ test-suite vsynth-test
     , random >=1.1
     , split >=0.2.3.4
     , text >=1.2.4.0
+    , text-conversions >=0.3.0
     , vsynth
   default-language: Haskell2010
