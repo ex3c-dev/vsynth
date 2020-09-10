@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9941ed143549bab39d66d48ba60fe428cc264f4160de89fd689527660119e0d6
+-- hash: 9df499874f810c7a6b1ecdc03942061c56d2330fe1d878151c3bfd550309cb90
 
 name:           vsynth
 version:        0.1.0.0
@@ -13,7 +13,7 @@ homepage:       https://github.com/githubuser/vsynth#readme
 bug-reports:    https://github.com/githubuser/vsynth/issues
 author:         Author name here
 maintainer:     example@example.com
-copyright:      2020 Author name here
+copyright:      Karrot. ALLES NUR ICH. ICH ALLEINE. CREDIT NUR AN MIR.
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -33,27 +33,51 @@ library
   hs-source-dirs:
       src
   build-depends:
-      OpenAL >=1.7.0.5
+      ALUT >=2.4.0.3
+    , MonadRandom >=0.5.2
+    , OpenAL >=1.7.0.5
+    , WAVE >=0.1.6
+    , async >=2.2.2
     , base >=4.7 && <5
     , gtk3 >=0.15.5
-    , lens >=4.18.1
     , text >=1.2.4.0
+    , bytestring >=0.10.10.0
+    , concurrency >=1.11.0.0
+    , lens >=4.18.1
+    , mtl >=2.2.2
+    , process >=1.6.8.0
+    , random >=1.1
+    , split >=0.2.3.4
   default-language: Haskell2010
 
 executable vsynth-exe
   main-is: Main.hs
   other-modules:
       Gui
+      Functions
+      IOShit
+      Structures
+      Utils
       Paths_vsynth
   hs-source-dirs:
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      OpenAL >=1.7.0.5
+      ALUT >=2.4.0.3
+    , MonadRandom >=0.5.2
+    , OpenAL >=1.7.0.5
+    , WAVE >=0.1.6
+    , async >=2.2.2
     , base >=4.7 && <5
     , gtk3 >=0.15.5
-    , lens >=4.18.1
     , text >=1.2.4.0
+    , bytestring >=0.10.10.0
+    , concurrency >=1.11.0.0
+    , lens >=4.18.1
+    , mtl >=2.2.2
+    , process >=1.6.8.0
+    , random >=1.1
+    , split >=0.2.3.4
     , vsynth
   default-language: Haskell2010
 
@@ -66,10 +90,20 @@ test-suite vsynth-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      OpenAL >=1.7.0.5
+      ALUT >=2.4.0.3
+    , MonadRandom >=0.5.2
+    , OpenAL >=1.7.0.5
+    , WAVE >=0.1.6
+    , async >=2.2.2
     , base >=4.7 && <5
     , gtk3 >=0.15.5
-    , lens >=4.18.1
     , text >=1.2.4.0
+    , bytestring >=0.10.10.0
+    , concurrency >=1.11.0.0
+    , lens >=4.18.1
+    , mtl >=2.2.2
+    , process >=1.6.8.0
+    , random >=1.1
+    , split >=0.2.3.4
     , vsynth
   default-language: Haskell2010
