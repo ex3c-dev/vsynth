@@ -3,8 +3,6 @@ cabal-version: 1.12
 -- This file has been generated from package.yaml by hpack version 0.34.2.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 9df499874f810c7a6b1ecdc03942061c56d2330fe1d878151c3bfd550309cb90
 
 name:           vsynth
 version:        0.1.0.0
@@ -39,23 +37,24 @@ library
     , WAVE >=0.1.6
     , async >=2.2.2
     , base >=4.7 && <5
-    , gtk3 >=0.15.5
-    , text >=1.2.4.0
     , bytestring >=0.10.10.0
     , concurrency >=1.11.0.0
+    , gtk3 >=0.15.5
     , lens >=4.18.1
     , mtl >=2.2.2
     , process >=1.6.8.0
     , random >=1.1
     , split >=0.2.3.4
+    , text >=1.2.4.0
   default-language: Haskell2010
 
 executable vsynth-exe
   main-is: Main.hs
   other-modules:
-      Gui
       Functions
+      Gui
       IOShit
+      Music
       Structures
       Utils
       Paths_vsynth
@@ -69,15 +68,15 @@ executable vsynth-exe
     , WAVE >=0.1.6
     , async >=2.2.2
     , base >=4.7 && <5
-    , gtk3 >=0.15.5
-    , text >=1.2.4.0
     , bytestring >=0.10.10.0
     , concurrency >=1.11.0.0
+    , gtk3 >=0.15.5
     , lens >=4.18.1
     , mtl >=2.2.2
     , process >=1.6.8.0
     , random >=1.1
     , split >=0.2.3.4
+    , text >=1.2.4.0
     , vsynth
   default-language: Haskell2010
 
@@ -96,14 +95,14 @@ test-suite vsynth-test
     , WAVE >=0.1.6
     , async >=2.2.2
     , base >=4.7 && <5
-    , gtk3 >=0.15.5
-    , text >=1.2.4.0
     , bytestring >=0.10.10.0
     , concurrency >=1.11.0.0
+    , gtk3 >=0.15.5
     , lens >=4.18.1
     , mtl >=2.2.2
     , process >=1.6.8.0
     , random >=1.1
     , split >=0.2.3.4
+    , text >=1.2.4.0
     , vsynth
   default-language: Haskell2010
