@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5ed2fce8fd2d4090321fef5d3993afa378da8c59b81775301e271700d9150f28
+-- hash: 9941ed143549bab39d66d48ba60fe428cc264f4160de89fd689527660119e0d6
 
 name:           vsynth
 version:        0.1.0.0
@@ -36,6 +36,7 @@ library
       OpenAL >=1.7.0.5
     , base >=4.7 && <5
     , gtk3 >=0.15.5
+    , lens >=4.18.1
     , text >=1.2.4.0
   default-language: Haskell2010
 
@@ -51,6 +52,7 @@ executable vsynth-exe
       OpenAL >=1.7.0.5
     , base >=4.7 && <5
     , gtk3 >=0.15.5
+    , lens >=4.18.1
     , text >=1.2.4.0
     , vsynth
   default-language: Haskell2010
@@ -67,6 +69,7 @@ test-suite vsynth-test
       OpenAL >=1.7.0.5
     , base >=4.7 && <5
     , gtk3 >=0.15.5
+    , lens >=4.18.1
     , text >=1.2.4.0
     , vsynth
   default-language: Haskell2010
