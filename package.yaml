@@ -31,6 +31,8 @@ dependencies:
 - lens >= 4.18.1
 - mtl >= 2.2.2
 - MonadRandom >= 0.5.2
+- async >= 2.2.2
+- concurrency >= 1.11.0.0
 
 library:
   source-dirs: src

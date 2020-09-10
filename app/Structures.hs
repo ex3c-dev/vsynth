@@ -1,4 +1,8 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Structures where
+
+import Control.Lens
+import Data.Maybe
 
 type DeviceSpecifier = Maybe String
 type Seconds = Float
@@ -9,15 +13,25 @@ type Semitone = Float
 type Beats = Float
 type Octave = Float
 type Volume = Float
+type Progression = Int
+type NumNotes = Int
+
+
+--- GAD -- kein C
+--- Tonic keine 4te stufe
+--- mit grundton Enden
 
 --for now everything is in sharp because I said so.
 --try and do own datatype that accepts alternatives... like either or???????
-data Key = A | As | B | C | Cs | D | Ds | E | F | Fs | G | Gs deriving (Enum, Show)
+--has to be Bounded so I can use my next function
+data Key = A | As | B | C | Cs | D | Ds | E | F | Fs | G | Gs deriving (Enum, Show, Eq, Bounded)
 
-data Voice = Bassline | Melody | ChordProgression | Drums deriving (Enum, Show)
+data Voice = Bassline | Melody | ChordProgression | Drums deriving (Enum, Show, Eq)
+
 
 twelveBarBlues :: [Int]
 twelveBarBlues = [1,1,1,1,4,4,1,1,5,4,1,5,5,4,1,5] 
+
 axisOfAwesome :: [Int]
 axisOfAwesome =  [1,5,6,4]
 
@@ -38,32 +52,29 @@ pachelbel = [1,5,6,3,4,1,4,5]
 -- ONE TO APPEND
 --PLEASE DO THIS -.- 
 
-key :: Enum a => a -> Semitone
-key k = fromIntegral $ fromEnum k 
-
 --psossibliy i should call this a triad lol
 chord :: [Int]
 chord = [0,2,4]
 
 --add case for no octave given
 
-majorScale :: [Semitone]
-majorScale = [1, 3, 5, 6, 8, 10, 12, 13]
+majScale :: [Semitone]
+majScale = [1, 3, 5, 6, 8, 10, 12, 13]
 
-minorScale :: [Semitone]
-minorScale = [1, 3, 4, 6, 8, 9, 11, 13]
+minScale :: [Semitone]
+minScale = [1, 3, 4, 6, 8, 9, 11, 13]
 
-diminishedScale :: [Semitone]
-diminishedScale = [1,3,4,6,7,9,10,12,13] -- i .. think?
+dimScale :: [Semitone]
+dimScale = [1,3,4,6,7,9,10,12,13] -- i .. think?
 
-minorPentagonic :: [Semitone]
-minorPentagonic = [1,4,6,8,11]
+minPentagonic :: [Semitone]
+minPentagonic = [1,4,6,8,11]
 
-majorPentagonic :: [Semitone]
-majorPentagonic = [1,3,5,8,10]
+majPentagonic :: [Semitone]
+majPentagonic = [1,3,5,8,10]
 
-testtt:: [Semitone]
-testtt = [1,5,8]
+fifthsScale:: [Semitone]
+fifthsScale = [1,8]
 
 --minor pentagonic
 --major pentagonic
@@ -76,7 +87,7 @@ data Note = Note {
 
 --eventually this could be updated on the fly maybe? instead of creating god knows how many bars. then use lenses to update
 -- current key ? i dunno
-
+makeLenses ''Note
 
 --maybe... use this to show information in gui and update values with lenses or whatever?? meeeeh.
 data Bar = Bar {
@@ -94,6 +105,13 @@ data Sheet = Sheet {
     _chordProg :: [Int]
 } deriving (Show)
 
+newtype Scale a = Scale {intervals :: [a] } deriving (Show,Ord,Eq)
+
+instance Functor Scale where
+    fmap f (Scale []) = Scale []
+    fmap f (Scale (x:xs)) = (Scale ((f x):(fmap f xs)))
+
+
 ---make function so that whatever durations i give they always sum up to 4
 
 --make zipwithN function to combine N voices?
@@ -104,3 +122,4 @@ data Sheet = Sheet {
 
 --for now skip stuff like intro
 --chordProgression position key 
+
