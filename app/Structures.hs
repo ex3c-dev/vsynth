@@ -28,7 +28,6 @@ data Key = A | As | B | C | Cs | D | Ds | E | F | Fs | G | Gs deriving (Enum, Sh
 
 data Voice = Bassline | Melody | ChordProgression | Drums deriving (Enum, Show, Eq)
 
-
 twelveBarBlues :: [Int]
 twelveBarBlues = [1,1,1,1,4,4,1,1,5,4,1,5,5,4,1,5] 
 

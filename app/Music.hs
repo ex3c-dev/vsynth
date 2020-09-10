@@ -223,6 +223,5 @@ playIt :: Sheet -> IO ()
 playIt = saveAsWav . _barSeq
 
 
-
 --[1,2,3] `zip` [4,5,6] `zip` [4,5,6] THIS IS FREAKIN AWESOME USE IT!!!
 

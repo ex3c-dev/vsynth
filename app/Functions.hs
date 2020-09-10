@@ -11,7 +11,6 @@ makeKey line key octave = [x + key + (octave * 12)| x <- line]
 makeKey2 :: [Semitone] -> Key -> Octave -> [Pulse]
 makeKey2 line k octave = map (\x -> x + key(k) + (octave * 12)) line
 
-
 createScale2 :: Key -> [Semitone] -> Octave -> Scale Semitone
 createScale2 root intervals octave = (Scale (map (\x -> x + key(root) + (octave * 12)) intervals))
 

@@ -40,5 +40,3 @@ main = do
         playFile (head args)
 
         createSheet axisOfAwesome A octave 4 4
-
-
