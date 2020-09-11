@@ -32,6 +32,8 @@ dependencies:
 - gtk3 >= 0.15.5
 - text >= 1.2.4.0
 - text-conversions >= 0.3.0
+- directory
+- glib
 - mtl >= 2.2.2
 - MonadRandom >= 0.5.2
 - async >= 2.2.2

@@ -6,6 +6,9 @@ import Control.Lens
 import Structures
 import Music
 import Data.Maybe
+import System.Directory
+import System.Glib.UTFString
+import Foreign.C.String
 
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -31,10 +34,19 @@ setupComboBox comboBox strings = map (\x -> Gtk3.comboBoxAppendText comboBox (T.
 addWidgets ::(Gtk3.WidgetClass widgets, Gtk3.ContainerClass container) => [widgets] -> container -> [IO ()]
 addWidgets widgets container = map (\x -> Gtk3.containerAdd (Gtk3.toContainer container) (Gtk3.toWidget x)) widgets
 
---initialiseGui :: ( String -> IO ) -> String -> IO (GuiElements)
+toFilePath :: [Char] -> FilePath
+toFilePath a = a
+
+getFilePath :: IO(String)
+getFilePath = do
+    a <- getCurrentDirectory
+    return $ a ++ (toFilePath "/output.wav") 
+
 initialiseGui :: ([Progression] -> Key -> Octave -> Int -> Int -> IO ()) -> String -> IO (GuiElements)
 initialiseGui createSheet title = do
     Gtk3.initGUI
+    -- Get Current working directory
+    filepath <- getFilePath
 
     -- Create GUI elements
     window <- Gtk3.windowNew
@@ -42,11 +54,15 @@ initialiseGui createSheet title = do
     hbuttonbox <- Gtk3.hButtonBoxNew
     vBox <- Gtk3.vBoxNew True 5
     hBox2 <- Gtk3.hBoxNew True 5
+    hBox3 <- Gtk3.hBoxNew True 5
     button1 <- Gtk3.buttonNewWithLabel "Select output directory"
     button2 <- Gtk3.buttonNewWithLabel "Create File"
     comboBox <- Gtk3.comboBoxNewText
+    comboBox2 <- Gtk3.comboBoxNewText
     entChord <- Gtk3.entryNew
     labChord <- Gtk3.labelNew (Just "Chord progression:")
+    labFolderHead <- Gtk3.labelNew (Just "Filename:")
+    labFolder <- Gtk3.labelNew (Just filepath)
     checkCustom <- Gtk3.checkButtonNewWithLabel "Custom Mode"
 
     -- Setup GUI elements
@@ -57,22 +73,29 @@ initialiseGui createSheet title = do
     Gtk3.containerAdd vBox hBox2
     Gtk3.containerAdd vBox hBox
     Gtk3.containerAdd vBox hbuttonbox
+    Gtk3.containerAdd vBox hBox3
     Gtk3.containerAdd window vBox
     Gtk3.containerAdd hBox2 checkCustom
     Gtk3.containerAdd hBox labChord
     Gtk3.containerAdd hBox entChord
     Gtk3.containerAdd hBox comboBox
+    Gtk3.containerAdd hBox comboBox2
+    Gtk3.containerAdd hBox3 labFolderHead
+    Gtk3.containerAdd hBox3 labFolder
+    
     Gtk3.set hbuttonbox [ Gtk3.containerChild Gtk3.:= button
                           | button <- [button1, button2] ]
     Gtk3.set hbuttonbox [ Gtk3.buttonBoxLayoutStyle Gtk3.:= Gtk3.ButtonboxStart
                            , Gtk3.buttonBoxChildSecondary button2 Gtk3.:= True  ]
 
     sequence $ setupComboBox comboBox ["Twelve Bar Blues", "Axis of Awesome", "Pessimistic", "Pop", "JazzCat", "Pachelbel"]
+    sequence $ setupComboBox comboBox2 ["Minor", "Major"]
     Gtk3.comboBoxSetActive comboBox 0
+    Gtk3.comboBoxSetActive comboBox2 0
 
     -- Setup event handlers
-    Gtk3.on button1 Gtk3.buttonActivated $ openSelectFolderDialog window
-    Gtk3.on button2 Gtk3.buttonActivated $ onStartButtonClicked comboBox createSheet
+    Gtk3.on button1 Gtk3.buttonActivated $ openSelectFolderDialog window labFolder
+    Gtk3.on button2 Gtk3.buttonActivated $ onStartButtonClicked comboBox comboBox2 labFolder createSheet
     Gtk3.on checkCustom Gtk3.toggled (onCustomChecked hBox entChord comboBox checkCustom)
 
     -- Finish GUI setup
@@ -100,43 +123,74 @@ createWindow s = do
 fuckOff :: String -> IO(Maybe T.Text)
 fuckOff text = do return (Just (convertText (text :: String) :: T.Text))
 
+toMaybe :: String -> Maybe T.Text
+toMaybe text = Just( toText text )
 
-onStartButtonClicked :: Gtk3.ComboBox -> ([Progression] -> Key -> Octave -> Int -> Int -> IO ()) -> IO()
-onStartButtonClicked comboBox createSheet = do
+chooseChord :: String -> IO()
+chooseChord chordType = do
+    if chordType == "Major"
+        then putStrLn "Major"
+        else putStrLn "Minor"
+
+
+onStartButtonClicked :: Gtk3.ComboBox -> Gtk3.ComboBox -> Gtk3.Label -> ([Progression] -> Key -> Octave -> Int -> Int -> IO ()) -> IO()
+onStartButtonClicked comboBox comboBoxMiMa fileLabel createSheet = do
+    filepath <- (Gtk3.labelGetText fileLabel) :: IO([Char])
+
+    chordTypeText <- Gtk3.comboBoxGetActiveText comboBoxMiMa
+    let chordType = convertText((fromMaybe (toText "Major") chordTypeText) :: T.Text) :: String
+
     coText <- Gtk3.comboBoxGetActiveText comboBox
-    let tbb = toText "Twelve Bar Blues"
-    let aoa = toText "Axis of Awesome"
-    let pe = toText "Pessimistic"
-    let pop = toText "Pop"
-    let jc = toText "JazzCat"
-    let pc = toText "Pachelbel"
-    case coText of 
-        Just tbb -> putStrLn "Twelve Bar Blues"
-        Just aoa-> putStrLn "Axis of Awesome"
-        Just pe -> putStrLn "Pessimistic"
-        Just pop-> putStrLn "Pop"
-        Just jc -> putStrLn "JazzCat"
-        Just pc -> putStrLn "Pachelbel"
-    --createSheet axisOfAwesome A octave 4 4
+    let text = fromMaybe (toText "Hi") coText
+    let choice = convertText(text :: T.Text) :: String
+
+    case choice of 
+        "Twelve Bar Blues" -> createSheet twelveBarBlues A octave 4 4
+        "Axis of Awesome"-> createSheet axisOfAwesome A octave 4 4
+        "Pessimistic" -> createSheet pessimistic A octave 4 4
+        "Pop"-> createSheet pop1 A octave 4 4
+        "JazzCat" -> createSheet jazzCat A octave 4 4
+        "Pachelbel" -> createSheet pachelbel A octave 4 4
     putStrLn (show coText)
 
+-- Remove punctuation from text String.
+removePunc :: String -> String
+removePunc xs = [ x | x <- xs, not (x `elem` "\"\'") ]
 
-openSelectFolderDialog :: Gtk3.Window -> IO()
-openSelectFolderDialog window = do
+fixFilePath :: String -> IO(String)
+fixFilePath s = do
+    putStrLn s
+    let a = T.pack ".wav"
+    let b = T.pack $ removePunc s
+    let hasSuffix = T.isInfixOf a b
+    if hasSuffix
+        then return (s)
+        else return (T.unpack $ T.concat [b, a])
+
+openSelectFolderDialog :: Gtk3.Window -> Gtk3.Label -> IO()
+openSelectFolderDialog window fileLabel = do
+    defaultPath <- (Gtk3.labelGetText fileLabel) :: IO([Char])
+    
     dialog <- Gtk3.fileChooserDialogNew
         (Just $ "Demo of the standart dialog "
-            ++ "to select an existing folder")
+            ++ "to select a new file")
         (Just window)
-        Gtk3.FileChooserActionSelectFolder
-        [   ("Yes, this dialog looks 1337", Gtk3.ResponseAccept)
-            , ("Raus mit de Viechers!", Gtk3.ResponseCancel)
+        Gtk3.FileChooserActionSave
+        [   ("Cancel", Gtk3.ResponseCancel),
+            ("Save", Gtk3.ResponseAccept)
         ]
+    fileFilter <- Gtk3.fileFilterNew
+    Gtk3.fileFilterSetName fileFilter ".wav"
+    Gtk3.fileFilterAddMimeType fileFilter "audio/wav"
+    Gtk3.fileChooserAddFilter dialog fileFilter        
     Gtk3.widgetShow dialog
     response <- Gtk3.dialogRun dialog
     case response of
-        Gtk3.ResponseAccept -> do {
-            Just fileName <- Gtk3.fileChooserGetFilename dialog;
-            putStrLn $ "you selected the folder " ++ show fileName;}
+        Gtk3.ResponseAccept -> do
+            a <- Gtk3.fileChooserGetFilename dialog
+            let fileName = fromMaybe (toFilePath defaultPath) a
+            c <- fixFilePath $ show fileName
+            Gtk3.labelSetText fileLabel c
         Gtk3.ResponseCancel -> putStrLn "dialog canceled"
         Gtk3.ResponseDeleteEvent -> putStrLn "dialog closed"
     Gtk3.widgetHide dialog
