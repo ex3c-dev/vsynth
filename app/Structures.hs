@@ -28,6 +28,8 @@ data Key = A | As | B | C | Cs | D | Ds | E | F | Fs | G | Gs deriving (Enum, Sh
 
 data Voice = Bassline | Melody | ChordProgression | Drums deriving (Enum, Show, Eq)
 
+data MajMin = Major | Minor deriving (Show, Eq)
+
 twelveBarBlues :: [Int]
 twelveBarBlues = [1,1,1,1,4,4,1,1,5,4,1,5,5,4,1,5] 
 
@@ -45,6 +47,12 @@ jazzCat = [2,5,1]
 
 pachelbel :: [Int]
 pachelbel = [1,5,6,3,4,1,4,5]
+
+minorProg1 :: [Int]
+minorProg1 = [1,4,5,1]
+
+minorProg2  :: [Int]
+minorProg2 = [1,6,3,7]
 
 --WRITE 2 FUNCTIONS:
 --ONE TO PLAY MUSIC IN PARALLEL 
@@ -64,16 +72,26 @@ minScale :: [Semitone]
 minScale = [1, 3, 4, 6, 8, 9, 11, 13]
 
 dimScale :: [Semitone]
-dimScale = [1,3,4,6,7,9,10,12,13] -- i .. think?
+dimScale = [1, 3, 4, 6, 7, 9, 10, 12, 13] -- i .. think?
+
+augScale :: [Semitone]
+--augScale = [1, 4, 5, 8, 11, 12, 13]
+augScale = [1, 4, 5, 8, 9, 12, 13]
 
 minPentagonic :: [Semitone]
 minPentagonic = [1,4,6,8,11]
 
+--12 , 10 
+fifthsmScale:: [Semitone]
+fifthsmScale = [1,4,8,13]
+
 majPentagonic :: [Semitone]
 majPentagonic = [1,3,5,8,10]
 
-fifthsScale:: [Semitone]
-fifthsScale = [1,8]
+--12 , 10 
+fifthsMScale:: [Semitone]
+fifthsMScale = [1,3,8,13]
+--fifthsScale = [1,3,8,13]
 
 --minor pentagonic
 --major pentagonic
@@ -101,6 +119,7 @@ data Sheet = Sheet {
     _numBars :: Int,
     _barSeq :: [Pulse], -- do i need this? i dont think so lmao
     _key :: Key,
+    _majMin :: MajMin,
     _chordProg :: [Int]
 } deriving (Show)
 
