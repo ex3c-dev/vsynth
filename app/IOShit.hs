@@ -20,8 +20,6 @@ import Data.IORef
 
 outputFilePath :: FilePath
 outputFilePath = "output.bin"
-inputPath :: FilePath
-inputPath = "fuckyou.wav"
 
 --save wave to format to play sound. Roll format
 --take individual pulses (wave) and put it to serializable binaries in file
@@ -29,8 +27,8 @@ inputPath = "fuckyou.wav"
 prepareFile :: FilePath -> [Float] -> IO ()
 prepareFile filePath file = B.writeFile filePath $ B.toLazyByteString $ fold $ map B.floatLE  file
 
-saveAsWav :: [Pulse] -> IO ()
-saveAsWav file = do
+saveAsWav :: [Pulse] -> FilePath -> IO ()
+saveAsWav file inputPath = do
    prepareFile outputFilePath file
    _ <- runCommand $ printf "ffmpeg -y -f f32le -i %s -f wav %s "  outputFilePath inputPath -- ignores the result of the run command, then returns unit
    return ()
