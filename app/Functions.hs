@@ -1,6 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
 module Functions where
-import Control.Lens
 
 import Structures
 
@@ -15,16 +13,17 @@ createScale2 root intervals octave = (Scale (map (\x -> x + key(root) + (octave 
 createScale :: Key -> [Semitone] -> Octave -> Scale Semitone
 createScale root intervals octave = (Scale (makeKey intervals root octave))
 
---transposes Scale to another key
-transposeScale :: Num a => Scale a -> a -> Scale a
-transposeScale scale i = (Scale (map (\x -> x + i) (intervals scale)))
+makeScale :: Num a => Scale a -> a -> Scale a
+makeScale scale i = (Scale (map (\x -> x + i) (intervals scale)))
 
---actually functional transpose function lmao. please replace the old one 
 -- basically subtract the chord we want to go to from the current chord to get an offset.
-transposeScale2 :: Scale Semitone -> Semitone -> Key-> Scale Semitone
-transposeScale2 scale i k = 
+transposeScale3 :: Scale Semitone -> Semitone -> Key-> Scale Semitone
+transposeScale3 scale i k = 
     let offset = i - (key(k))
-    in (Scale (map (\x -> x + offset) (intervals scale)))
+    in (Scale (map (\x -> x + (i - (key(k)))) (intervals scale)))
+
+transposeScale2 :: Scale Semitone -> Semitone -> Key-> Scale Semitone
+transposeScale2 scale i k = Scale (map (\x -> x + (i - (key(k)))) (intervals scale))
 
 
 --Create some basic scales
@@ -53,13 +52,7 @@ key :: Enum a => a -> Semitone
 key k = fromIntegral $ fromEnum k 
 
 -- returns key from a chord progression indice
-mapProgToKey :: Key -> Int -> Octave -> Semitone
-mapProgToKey k indice octave =
-    let scale = majorScale k octave
-    in (intervals scale) !! (indice -1)
-
 mapProgToKey2 :: Key -> Int -> Octave -> Semitone
 mapProgToKey2 k indice octave =
     let scale = majorScale k octave
     in ((intervals scale) !! (indice -1)) -1
-
