@@ -22,6 +22,14 @@ createScale root intervals octave = (Scale (makeKey2 intervals root octave))
 transposeScale :: Num a => Scale a -> a -> Scale a
 transposeScale scale i = (Scale (map (\x -> x + i) (intervals scale)))
 
+--actually functional transpose function lmao. please replace the old one 
+-- basically subtract the chord we want to go to from the current chord to get an offset.
+transposeScale2 :: Scale Semitone -> Semitone -> Key-> Scale Semitone
+transposeScale2 scale i k = 
+    let offset = i - (key(k))
+    in (Scale (map (\x -> x + offset) (intervals scale)))
+
+
 --Create some basic scales
 majorScale root octave = createScale root majScale octave
 
@@ -33,7 +41,12 @@ minorPentagonic root octave = createScale root minPentagonic octave
 
 diminishedScale root octave = createScale root dimScale octave
 
-chordScale root octave = createScale root fifthsScale octave
+augmentedScale root octave = createScale root augScale octave
+
+chordScale root octave = createScale root fifthsMScale octave
+
+fifthsMinorScale root octave = createScale root fifthsmScale octave
+
 
 --  Fetches Enum value by indice
 getKey :: Int -> Key

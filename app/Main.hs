@@ -37,6 +37,8 @@ main = do
         unless (length args == 1) $ do
             hPutStrLn stderr ("usage: " ++ progName ++ " <fileName>")
             exitFailure
+
+        createSheet axisOfAwesome A octave Major 4 4
+
         playFile (head args)
 
-        createSheet axisOfAwesome A octave 4 4

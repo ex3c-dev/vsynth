@@ -26,8 +26,8 @@ pickNSumCeiling line n = do
     return $ [line !! x | x <- listSumCeiling (evalRand (randomIndices $length line -1) g) 4]
 
 -- return n random elements from list
-pickNFromScale :: [a] -> Int -> IO [a]
-pickNFromScale line n = do
+pickNRandom :: [a] -> Int -> IO [a]
+pickNRandom line n = do
     g <- newStdGen
     return $ [line !! x | x <- take n (evalRand (randomIndices $length line -1) g)]
 
