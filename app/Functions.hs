@@ -4,19 +4,16 @@ import Control.Lens
 
 import Structures
 
-makeKey :: [Semitone] -> Semitone -> Octave -> [Pulse]
-makeKey line key octave = [x + key + (octave * 12)| x <- line]
-
 --Function that shifts (root) note to another key 
-makeKey2 :: [Semitone] -> Key -> Octave -> [Pulse]
-makeKey2 line k octave = map (\x -> x + key(k) + (octave * 12)) line
+makeKey :: [Semitone] -> Key -> Octave -> [Pulse]
+makeKey line k octave = map (\x -> x + key(k) + (octave * 12)) line
 
 createScale2 :: Key -> [Semitone] -> Octave -> Scale Semitone
 createScale2 root intervals octave = (Scale (map (\x -> x + key(root) + (octave * 12)) intervals))
 
 --Creates Scale in Key in Octave
 createScale :: Key -> [Semitone] -> Octave -> Scale Semitone
-createScale root intervals octave = (Scale (makeKey2 intervals root octave))
+createScale root intervals octave = (Scale (makeKey intervals root octave))
 
 --transposes Scale to another key
 transposeScale :: Num a => Scale a -> a -> Scale a
@@ -46,7 +43,6 @@ augmentedScale root octave = createScale root augScale octave
 chordScale root octave = createScale root fifthsMScale octave
 
 fifthsMinorScale root octave = createScale root fifthsmScale octave
-
 
 --  Fetches Enum value by indice
 getKey :: Int -> Key

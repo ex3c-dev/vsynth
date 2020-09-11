@@ -27,8 +27,6 @@ import Data.IORef
 import Gui
 
 
-
-
 main :: IO ()
 main = do
 

@@ -28,7 +28,7 @@ import Control.Concurrent
 import Data.IORef
 
 volume :: Volume
-volume = 0.1
+volume = 0.05
 
 octave :: Octave
 octave = 0.0
@@ -86,15 +86,12 @@ arpeggio key tscale dur vol =
 ---try and do this with list comprehension with i in length (chord)
 triad :: Semitone -> Scale Semitone -> Beats -> Volume -> [Pulse]
 triad key tscale dur vol = 
-    --let scale = createScale (getKey(round key)) majPentagonic octave
-    --let scale = transposeScale tscale key
     let scale = transposeScale tscale key
         v = take (length chord) $ repeat vol
         d = take (length chord) $ repeat dur
         chordDone = [(intervals scale) !! x | x <- chord]
         notes = makeNote chordDone d v
     in concat [zipWith3 (\x y z -> x + y + z) (makeLine ([notes !! 0])) (makeLine ([notes !! 1])) (makeLine ([notes !! 2]))]
-
 
 chordInMinorProg :: Int -> Key -> Octave -> [Pulse]
 chordInMinorProg index k octave 
@@ -106,26 +103,28 @@ chordInMinorProg index k octave
     where i = mapProgToKey2 k index octave
 
 --scope bindings over several guarded equations
-chordInProg :: Int -> Key -> Octave -> [Pulse]
-chordInProg index k octave 
+chordInMajorProgression :: Int -> Key -> Octave -> [Pulse]
+chordInMajorProgression index k octave 
     | index == 1 || index == 4 || index == 5 = triad (i) (majorScale A octave) qn volume
     | index == 2 || index == 3 || index == 6 = triad (i) (minorScale A octave) qn volume 
     | index == 7 = triad (i) (diminishedScale A octave) qn volume
     | otherwise =  error "Invalid chord progression"
     where i = mapProgToKey2 k index octave
   
-arpeggioInProg :: Int -> Key -> Octave -> [Pulse]
-arpeggioInProg index k octave
+arpeggioInMajorProgression :: Int -> Key -> Octave -> [Pulse]
+arpeggioInMajorProgression index k octave
     | index == 1 || index == 4 || index == 5 = arpeggio (i) (majorScale A octave) (replicate 4 (qn/4)) (replicate 4 (qn/4))
     | index == 2 || index == 3 || index == 6 = arpeggio (i) (minorScale A octave) (replicate 4 (qn/4))(replicate 4 (qn/4))
     | index == 7 = arpeggio (i) (diminishedScale A octave) (take 4 (repeat (qn/4))) (replicate 4 (qn/4))
     | otherwise =  error "Invalid chord progression"
     where i = mapProgToKey2 k index octave 
+
 --higher order function
 --createProgressionBar :: (Int -> Float -> [Pulse]) -> [Int] -> Semitone -> [Pulse]
 createProgressionBar:: (t1 -> t2 -> t3 -> [a]) -> [t1] -> t2 -> t3 -> [a]
 createProgressionBar f prog key octave = concat [concat $ replicate 4 $ f i key octave| i <- prog] 
 
+--alternative melody creattion that plays in root key over all bars
 randomMelody :: Scale Semitone -> Int -> p -> IO [Pulse]
 randomMelody scale num_notes voices = do
     line <- pickNRandom (intervals scale) num_notes
@@ -137,27 +136,13 @@ randomMelody scale num_notes voices = do
         playMelody = notes ++ notes ++ reverse notes ++ reverse notes
     return $ makeLine playMelody
 
-randomMelodyInKey :: Scale Semitone -> Int -> p -> IO [Pulse]
-randomMelodyInKey scale num_notes voices = do
+--melody that follows chord progression
+progressiveMelody :: Scale Semitone -> Octave -> Int -> p -> IO [Note]
+progressiveMelody scale octave num_notes voices = do
     --TODO: account for voices
     
     line <- pickNRandom (intervals scale) num_notes
-    vols <- pickNRandom [0.0, 0.1 .. 0.5] num_notes
-    durs <- pickNSumCeiling [0.25, 0.5 .. 1] num_notes 
-    let a = durs
-        b = sum durs
-        c = if b < 4 then a ++ [4 - b] else a -- bar length has to be 4
-        melody = makeNote line c vols 
-    let playMelody = makeNote c durs vols
-       -- lines = makeLine playMelody
-    return $ makeLine playMelody
-
-randomProgMelody :: Scale Semitone -> Octave -> Int -> p -> IO [Note]
-randomProgMelody scale octave num_notes voices = do
-    --TODO: account for voices
-    
-    line <- pickNRandom (intervals scale) num_notes
-    vols <- pickNRandom [0.0, 0.05 .. 0.5] num_notes
+    vols <- pickNRandom [0.0, 0.05 .. 0.2] num_notes
     durs <- pickNSumCeiling [0.25, 0.5 .. 1] num_notes 
     let a = durs
         b = sum durs
@@ -168,115 +153,60 @@ randomProgMelody scale octave num_notes voices = do
 --really bad soulless walking bass 
 walkingBass :: Scale Semitone -> Octave -> Int -> Voice -> IO [Note]
 walkingBass scale octave num_notes voices = do
-    --TODO: account for voices
     l <- pickNRandom (intervals scale) 2
     --let line = (take 3 (intervals scale)) ++ [(intervals scale) !! 0]  --find out which one is more efficient
     let line = [(intervals scale !! 0)] ++ l ++ [(intervals scale !! 0)]
-        melody = makeNote line (replicate 4 1) (replicate 4 0.2) 
+        melody = makeNote line (replicate 4 1) (replicate 4 0.1) 
     return melody
 
----fix passing on function
--- I CAN PASS A VOICE HERE WOHOO
-bassProgression :: [Progression] -> Scale Semitone -> Key -> Octave -> Int -> Voice -> IO [Pulse]
-bassProgression chordProg scale k octave num_notes voices = do
-    let chords =  [mapProgToKey2 k index octave | index <- chordProg]
-    seq <- sequence[walkingBass (minorScale (getKey(round k)) octave) octave num_notes voices | k <- chords ]
-    return  $ makeLine $ concat seq
+--Let a voice solo over a chord Progression
+voiceProgression :: [Progression] -> Scale Semitone -> Key -> Octave -> NumNotes -> Voice -> IO [Pulse]
+voiceProgression chordProg scale tk octave num_notes voices 
+    | voices == Melody = do 
+        seq <- sequence[progressiveMelody (transposeScale2 scale k tk) octave num_notes voices | k <- chords ]
+        return  $ makeLine $ concat seq
+    | voices == Bassline = do
+        seq <- sequence[walkingBass (transposeScale2 scale k tk) octave num_notes voices | k <- chords ]
+        return  $ makeLine $ concat seq
+    | voices == ChordProgression = do
+        return $ createProgressionBar chordInMinorProg chordProg tk octave
 
-----TODO fix this-------------
------ check octave out. wtf ever it is xDDDD
-progMelody :: [Progression] -> Scale Semitone -> Key -> Octave -> NumNotes -> Voice -> IO [Pulse]
-progMelody chordProg scale tk octave num_notes voices = do
-    let chords =  [mapProgToKey2 tk index octave | index <- chordProg]
-    seq <- sequence[randomProgMelody (transposeScale2 scale k tk) octave num_notes voices | k <- chords ]
-    --seq <- sequence[randomProgMelody (minorPentagonic tk octave) octave num_notes voices | k <- chords ]
-    return  $ makeLine $ concat seq
-
+    where chords =  [mapProgToKey2 tk index octave | index <- chordProg]
+    
+    
 ---create zip N with n O num_voices?
 --https://hoogle.haskell.org/?hoogle=%5BIO+a%5D+->+IO+%5Ba%5D   ---> idea for parallelization
-createBars :: [Progression] -> Key  -> Octave -> Int -> NumNotes -> IO [Pulse]
-createBars chordSeq k octave num_bars num_notes = do
-
-    melody <- randomMelody (majorPentagonic k octave) num_notes Melody 
-    let mel = concat $ replicate (length chordSeq * num_bars) melody
-        chords = concat $ replicate num_bars $ createProgressionBar  chordInProg chordSeq k octave
-
-    ---in [Bar key [Melody, ChordProgression] melody]
-        sound = zipWith (+) mel chords
-    --return [Bar key [Melody, ChordProgression] sound]
-
-    return sound
-
-createBars3 :: [Progression] -> Key  -> Octave -> Int -> NumNotes -> IO [Pulse]
-createBars3 chordSeq k octave num_bars num_notes = do
+createBars :: [Progression] -> Key  -> Octave -> MajMin -> Int -> NumNotes -> IO [Pulse]
+createBars chordSeq k octave majMin num_bars num_notes = do
     
-    melody <- progMelody chordSeq (chordScale k octave) k octave num_notes Melody 
-    melody2 <- progMelody chordSeq (chordScale k octave) k octave num_notes Melody  
-    melody3 <- progMelody chordSeq (chordScale k octave) k octave num_notes Melody  
-    melody4 <- progMelody chordSeq (chordScale k octave) k octave num_notes Melody  
-
-    bass <- bassProgression chordSeq (majorScale k (octave - 2 )) (k) (octave - 2) num_notes Bassline  
-    let b = concat $ replicate (length chordSeq) $ bass
- 
-    let chords = concat $ replicate (length chordSeq) $ createProgressionBar chordInProg chordSeq k octave
-        mel =  melody ++ melody2 ++ melody3 ++ melody4
-        --mel =  concat $ replicate (length chordSeq * num_bars) melody
-        --sound = mel `zipWith (+)` chords `zipWith (+) ` bassLine
-        sound = zipWith3 (\x y z -> x + y + z) mel chords b
-    --return [Bar key [Melody, ChordProgression] sound]
-    return sound
-
-
-createMinorBars3 :: [Progression] -> Key  -> Octave -> MajMin -> Int -> NumNotes -> IO [Pulse]
-createMinorBars3 chordSeq k octave majMin num_bars num_notes = do
     let scale = if majMin == Major then chordScale k octave else  minorPentagonic k octave
-    let bassScale = if majMin == Major then majorScale k (octave - 2) else minorScale k (octave - 2)
-
-    melody1 <- progMelody chordSeq scale k octave num_notes Melody 
-    melody2 <- progMelody chordSeq scale k octave num_notes Melody  
-    melody3 <- progMelody chordSeq scale k octave num_notes Melody  
-    melody4 <- progMelody chordSeq scale k octave num_notes Melody  
-
-    bass <- bassProgression chordSeq bassScale k (octave - 2) num_notes Bassline  
+    let bassScale = if majMin == Major then chordScale k (octave - 2) else minorScale k (octave - 2)
+    let f = if majMin == Major then chordInMinorProg else chordInMajorProgression
+    
+    --melodyA <- randomMelody scale num_notes Melody 
+    --let melAlt = concat $ replicate (length chordSeq * num_bars) melodyA
+    
+    let melody = voiceProgression chordSeq scale k octave num_notes Melody
+    c1 <- concurrently melody melody
+    c2 <- concurrently melody melody
+    
+    bass <- voiceProgression chordSeq bassScale k octave num_notes Bassline  
+    chords <- voiceProgression chordSeq bassScale k octave num_notes ChordProgression
     let b = concat $ replicate (length chordSeq) $ bass
-        chords = concat $ replicate (length chordSeq) $ createProgressionBar chordInMinorProg chordSeq k octave
-        mel =  melody1 ++ melody2 ++ melody3 ++ melody4
-        --mel =  concat $ replicate (length chordSeq * num_bars) melody
-        --sound = mel `zipWith (+)` chords `zipWith (+) ` bassLine
+        chordpattern = concat $ replicate (length chordSeq) $ chords
+        mel =  fst c1 ++ snd c1 ++ fst c2 ++ snd c2
         chords2 = if majMin == Major 
-            then concat $ replicate (length chordSeq) $ createProgressionBar chordInProg chordSeq k octave
+            then concat $ replicate (length chordSeq) $ createProgressionBar chordInMajorProgression chordSeq k octave
             else concat $ replicate (length chordSeq) $ createProgressionBar chordInMinorProg chordSeq k octave
         sound = zipWith3 (\x y z -> x + y + z) mel chords2 b
     --return [Bar key [Melody, ChordProgression] sound]
     return sound
 
----concurrently test. only works on IO stuff though
-createBars2 :: [Progression] -> Key  -> Octave -> Int -> NumNotes -> IO [Pulse]
-createBars2 chordSeq k octave num_bars num_notes= do
-    let 
-        melodyA =  progMelody chordSeq (majorPentagonic k octave) ( k) octave num_notes Melody ----make it take korrekt duration as input
-        melodyB = randomMelodyInKey (majorPentagonic k octave) num_notes Melody
-    melodyC <- progMelody chordSeq (majorPentagonic k octave)(k) octave num_notes Melody 
-    melodyD <- randomMelodyInKey (majorPentagonic k octave) num_notes Melody
-
-
-    c <- concurrently (melodyA) (melodyB )
-    let m = fst c ++ snd c ++ melodyC ++ melodyD
-        mel = concat $ replicate (length chordSeq * num_bars) m
-        chords = concat $ replicate num_bars $ createProgressionBar chordInProg chordSeq k octave  ----take chordprogression as input
-    ---in [Bar key [Melody, ChordProgression] melody]
-        sound = zipWith (+) mel chords
-    --return [Bar key [Melody, ChordProgression] sound]
-    return sound
-
--- add options for voices
--- as in MOAH
---would be nice to print the bar sequence but MEH.
 createSheet :: [Progression] -> Key -> Octave -> MajMin-> Int -> NumNotes -> IO ()
 createSheet chordSeq key octave majMin numBars num_notes
     | any (< 0) chordSeq || any (>7) chordSeq    = do error "Invalid chord progression"
     | otherwise = do
-        bars <-  createMinorBars3 chordSeq key octave majMin numBars num_notes
+        bars <-  createBars chordSeq key octave majMin numBars num_notes
         let sheet = Sheet {_chordProg = chordSeq, _key = key, _majMin = majMin, _numBars = numBars, _barSeq = bars} --Reconrd Syntax
         saveAsWav (_barSeq sheet)
 
