@@ -92,7 +92,7 @@ initialiseGui title = do
     labNotes <- Gtk3.labelNew (Just "Notes:")
     labFolder <- Gtk3.labelNew (Just filepath)
     checkCustom <- Gtk3.checkButtonNewWithLabel "Custom Mode"
-    scaleOct <- Gtk3.hScaleNewWithRange (-5.0) (5.0) (0.1)
+    scaleOct <- Gtk3.hScaleNewWithRange (-5.0) (5.0) (1.0)
     spinBars <- Gtk3.spinButtonNewWithRange 1 20 1
     spinNotes <- Gtk3.spinButtonNewWithRange 1 20 1
 
