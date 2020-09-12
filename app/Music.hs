@@ -180,67 +180,6 @@ createBars chordSeq k octave majMin num_bars num_notes = do
         return $ zipWith3 (\x y z -> x + y + z) mels chordpattern b
 
 
-
-createBars2 chordSeq k octave majMin num_bars num_notes = do
-
-
-        melody1 <- async $ voiceProgression chordSeq  k octave majMin num_notes Melody
-        melody2 <- async $ voiceProgression chordSeq  k octave majMin num_notes Melody
-        melody3 <- async $ voiceProgression chordSeq  k octave majMin num_notes Melody
-        melody4 <- async $ voiceProgression chordSeq  k octave majMin num_notes Melody
-        bass <- async $ voiceProgression chordSeq k octave majMin num_notes Bassline  
-        chords <- async $ voiceProgression chordSeq k octave majMin num_notes ChordProgression
-
-        m1 <- concurrently (wait melody1) (wait melody2)
-        m2 <- concurrently (wait melody3) (wait melody4)
-        b1 <- concurrently (wait bass) (wait chords)
-
-        let b = concat $ replicate (num_bars) $ fst b1
-            chordpattern = concat $ replicate (num_bars) $ snd b1
-            mels = concat $ replicate (num_bars) $ fst m1 ++ snd m1 ++ fst m2 ++ snd m2
-
-        return $ zipWith3 (\x y z -> x + y + z) mels chordpattern b
-
-
-createBars3 chordSeq k octave majMin num_bars num_notes =  do
-
-    --mv <- new
-    --forkIO $ do { (voiceProgression chordSeq  k octave majMin num_notes Melody); putMVar mv ()}
-    --b<- takeVar mv
-
-
-    let (t1, t2, t3) = runPar $ do
-        {--
-        v1 <- new
-        v2 <- new
-        v3 <- new
-        fork $ put v1 $ voiceProgression chordSeq  k octave majMin num_notes Melody
-        fork $ put v2 $ voiceProgression chordSeq k octave majMin num_notes Bassline
-        fork $ put v3 $ voiceProgression chordSeq k octave majMin num_notes Bassline
-        --}
-        
-
-        v1 <- spawnP $  (voiceProgression chordSeq  k octave majMin num_notes Melody)
-        v2 <- spawnP $ (voiceProgression chordSeq k octave majMin num_notes Bassline)
-        v3 <-  spawnP $ (voiceProgression chordSeq k octave majMin num_notes ChordProgression)
-
-        r1 <- get v1
-        r2 <- get v2
-        r3 <- get v3
-        return (r1, r2, r3)
-
-    a1 <-  t1
-    a2 <-  t2
-    a3 <-  t3
-
-    let b = zipWith3 (\x y z -> x + y + z) a1 a2 a3
-
-    let c =  deepseq b
-    let d = rnf c
-    return b
-
-    --return (t1, t2, t3)
-
 createSheet filePath chordSeq key octave majMin numBars num_notes
     | any (< 0) chordSeq || any (>7) chordSeq    = do error "Invalid chord progression"
     | otherwise = do
@@ -248,5 +187,5 @@ createSheet filePath chordSeq key octave majMin numBars num_notes
         let sheet = Sheet {_chordProg = chordSeq, _key = key, _majMin = majMin, _numBars = numBars, _barSeq = bars} --Record Syntax
         saveAsWav (_barSeq sheet) filePath
 
-playIt :: Sheet -> IO ()
-playIt = saveAsWav . _barSeq
+playIt :: FilePath -> Sheet -> IO ()
+playIt filePath sheet = saveAsWav (_barSeq sheet) filePath
