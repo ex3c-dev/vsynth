@@ -6,6 +6,7 @@ import Control.Lens
 import Data.Bool
 
 -- Enum Cycling. Useful to cycle data Key which derives Enum
+-- data has to derive Bounded and Eq. Eq checks if it is the last element
 next :: (Eq a, Enum a, Bounded a) => a -> a
 next = bool minBound <$> succ <*> (/= maxBound)
 
