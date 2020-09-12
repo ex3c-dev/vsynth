@@ -241,13 +241,12 @@ createBars3 chordSeq k octave majMin num_bars num_notes =  do
 
     --return (t1, t2, t3)
 
-
-createSheet chordSeq key octave majMin numBars num_notes
+createSheet filePath chordSeq key octave majMin numBars num_notes
     | any (< 0) chordSeq || any (>7) chordSeq    = do error "Invalid chord progression"
     | otherwise = do
         bars <-  createBars chordSeq key octave majMin numBars num_notes
         let sheet = Sheet {_chordProg = chordSeq, _key = key, _majMin = majMin, _numBars = numBars, _barSeq = bars} --Record Syntax
-        saveAsWav (_barSeq sheet)
+        saveAsWav (_barSeq sheet) filePath
 
 playIt :: Sheet -> IO ()
 playIt = saveAsWav . _barSeq

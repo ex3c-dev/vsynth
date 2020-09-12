@@ -9,6 +9,8 @@ import Data.Maybe
 import System.Directory
 import System.Glib.UTFString
 import Foreign.C.String
+import Control.Concurrent.Async
+import Control.Concurrent
 
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -22,11 +24,30 @@ data GuiElements = GuiElements {
     _butStart :: Gtk3.Button
 }
 
+-- Defining some lenses in case we need them later
 --window :: Lens' GuiElements Gtk3.Window
 --window = lens _window (\guiElements g -> guiElements { _window = g })
 
 window :: Lens' GuiElements Gtk3.Window
 window k (GuiElements win hbox che com ent butSave butStart) = (\win' -> GuiElements win' hbox che com ent butSave butStart) <$> k win
+
+hBox :: Lens' GuiElements Gtk3.HBox
+hBox k (GuiElements win hbox che com ent butSave butStart) = (\hbox' -> GuiElements win hbox' che com ent butSave butStart) <$> k hbox
+
+checkCustom :: Lens' GuiElements Gtk3.CheckButton
+checkCustom k (GuiElements win hbox che com ent butSave butStart) = (\che' -> GuiElements win hbox che' com ent butSave butStart) <$> k che
+
+comboBox :: Lens' GuiElements Gtk3.ComboBox
+comboBox k (GuiElements win hbox che com ent butSave butStart) = (\com' -> GuiElements win hbox che com' ent butSave butStart) <$> k com
+
+entChord :: Lens' GuiElements Gtk3.Entry
+entChord k (GuiElements win hbox che com ent butSave butStart) = (\ent' -> GuiElements win hbox che com ent' butSave butStart) <$> k ent
+
+butSave :: Lens' GuiElements Gtk3.Button
+butSave k (GuiElements win hbox che com ent butSave butStart) = (\butSave' -> GuiElements win hbox che com ent butSave' butStart) <$> k butSave
+
+butStart :: Lens' GuiElements Gtk3.Button
+butStart k (GuiElements win hbox che com ent butSave butStart) = (\butStart' -> GuiElements win hbox che com ent butSave butStart') <$> k butStart
 
 setupComboBox :: Gtk3.ComboBox -> [String] -> [IO Int]
 setupComboBox comboBox strings = map (\x -> Gtk3.comboBoxAppendText comboBox (T.pack x)) strings
@@ -42,8 +63,8 @@ getFilePath = do
     a <- getCurrentDirectory
     return $ a ++ (toFilePath "/output.wav") 
 
-initialiseGui :: ([Progression] -> Key -> Octave -> Int -> Int -> IO ()) -> String -> IO (GuiElements)
-initialiseGui createSheet title = do
+initialiseGui :: String -> IO (GuiElements)
+initialiseGui title = do
     Gtk3.initGUI
     -- Get Current working directory
     filepath <- getFilePath
@@ -55,31 +76,54 @@ initialiseGui createSheet title = do
     vBox <- Gtk3.vBoxNew True 5
     hBox2 <- Gtk3.hBoxNew True 5
     hBox3 <- Gtk3.hBoxNew True 5
+    hBox4 <- Gtk3.hBoxNew True 5
+    hBox5 <- Gtk3.hBoxNew True 5
     button1 <- Gtk3.buttonNewWithLabel "Select output directory"
     button2 <- Gtk3.buttonNewWithLabel "Create File"
     comboBox <- Gtk3.comboBoxNewText
     comboBox2 <- Gtk3.comboBoxNewText
+    comboKey <- Gtk3.comboBoxNewText
     entChord <- Gtk3.entryNew
     labChord <- Gtk3.labelNew (Just "Chord progression:")
+    labKey <- Gtk3.labelNew (Just "Key:")
+    labOctave <- Gtk3.labelNew (Just "Octave:")
     labFolderHead <- Gtk3.labelNew (Just "Filename:")
+    labBars <- Gtk3.labelNew (Just "Bars:")
+    labNotes <- Gtk3.labelNew (Just "Notes:")
     labFolder <- Gtk3.labelNew (Just filepath)
     checkCustom <- Gtk3.checkButtonNewWithLabel "Custom Mode"
+    scaleOct <- Gtk3.hScaleNewWithRange (-5.0) (5.0) (0.1)
+    spinBars <- Gtk3.spinButtonNewWithRange 1 20 1
+    spinNotes <- Gtk3.spinButtonNewWithRange 1 20 1
 
     -- Setup GUI elements
     Gtk3.on window Gtk3.objectDestroy Gtk3.mainQuit
     Gtk3.set window [ Gtk3.containerBorderWidth Gtk3.:= 10, Gtk3.windowTitle Gtk3.:= title ]
-    Gtk3.entrySetText entChord "Enter chord array"
+    Gtk3.entrySetText entChord "1 5 6 4"
+    Gtk3.rangeSetValue scaleOct (0.0)
+    Gtk3.spinButtonSetValue spinBars 4
+    Gtk3.spinButtonSetValue spinNotes 4
 
     Gtk3.containerAdd vBox hBox2
     Gtk3.containerAdd vBox hBox
+    Gtk3.containerAdd vBox hBox4
+    Gtk3.containerAdd vBox hBox5
     Gtk3.containerAdd vBox hbuttonbox
     Gtk3.containerAdd vBox hBox3
     Gtk3.containerAdd window vBox
     Gtk3.containerAdd hBox2 checkCustom
     Gtk3.containerAdd hBox labChord
     Gtk3.containerAdd hBox entChord
-    Gtk3.containerAdd hBox comboBox
     Gtk3.containerAdd hBox comboBox2
+    Gtk3.containerAdd hBox comboBox
+    Gtk3.containerAdd hBox4 labKey
+    Gtk3.containerAdd hBox4 comboKey
+    Gtk3.containerAdd hBox4 labOctave
+    Gtk3.containerAdd hBox4 scaleOct
+    Gtk3.containerAdd hBox5 labBars
+    Gtk3.containerAdd hBox5 spinBars
+    Gtk3.containerAdd hBox5 labNotes
+    Gtk3.containerAdd hBox5 spinNotes
     Gtk3.containerAdd hBox3 labFolderHead
     Gtk3.containerAdd hBox3 labFolder
     
@@ -89,13 +133,16 @@ initialiseGui createSheet title = do
                            , Gtk3.buttonBoxChildSecondary button2 Gtk3.:= True  ]
 
     sequence $ setupComboBox comboBox ["Twelve Bar Blues", "Axis of Awesome", "Pessimistic", "Pop", "JazzCat", "Pachelbel"]
-    sequence $ setupComboBox comboBox2 ["Minor", "Major"]
+    sequence $ setupComboBox comboBox2 ["Major", "Minor"]
+    sequence $ setupComboBox comboKey ["A", "As", "B", "C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs"]
+
     Gtk3.comboBoxSetActive comboBox 0
     Gtk3.comboBoxSetActive comboBox2 0
+    Gtk3.comboBoxSetActive comboKey 0
 
     -- Setup event handlers
     Gtk3.on button1 Gtk3.buttonActivated $ openSelectFolderDialog window labFolder
-    Gtk3.on button2 Gtk3.buttonActivated $ onStartButtonClicked comboBox comboBox2 labFolder createSheet
+    Gtk3.on button2 Gtk3.buttonActivated $ onStartButtonClicked comboBox comboBox2 labFolder createSheet checkCustom entChord comboKey scaleOct spinBars spinNotes
     Gtk3.on checkCustom Gtk3.toggled (onCustomChecked hBox entChord comboBox checkCustom)
 
     -- Finish GUI setup
@@ -106,66 +153,88 @@ initialiseGui createSheet title = do
     let elements = GuiElements {_window = window,_hBox = hBox,_checkCustom = checkCustom, _comboBox = comboBox,_entChord = entChord, _butSave = button1, _butStart = button2}
     return elements
 
+chooseChord :: String -> MajMin
+chooseChord chordType
+    | chordType == "Minor" = Minor
+    | otherwise = Major
 
+createChordProgression :: String -> [Int]
+createChordProgression input = map (read::String->Int) list
+    where list = words input
 
-createWindow :: String -> IO ()
-createWindow s = do
-    --windowElements <- initialiseGui (test) s
+onStartButtonClicked :: Gtk3.ComboBox -> Gtk3.ComboBox -> Gtk3.Label -> (FilePath -> [Progression] -> Key -> Octave -> MajMin-> Int -> NumNotes -> IO ()) -> Gtk3.CheckButton -> Gtk3.Entry -> Gtk3.ComboBox -> Gtk3.HScale -> Gtk3.SpinButton -> Gtk3.SpinButton -> IO()
+onStartButtonClicked comboBox comboBoxMiMa fileLabel createSheet customTB customEnt comboKeys scaleOctave spinBars spinNotes = do
+    keysText <- Gtk3.comboBoxGetActiveText comboKeys
+    let selKey = convertText((fromMaybe (toText "A") keysText) :: T.Text) :: String
+    let key = selectKey selKey
+
+    octaveRangeValue <- Gtk3.rangeGetValue scaleOctave
+    let octaveValue = (realToFrac octaveRangeValue) :: Float
+
+    barsValue <- Gtk3.spinButtonGetValueAsInt spinBars
+    notesValue <- Gtk3.spinButtonGetValueAsInt spinNotes
     
-    --size <- Gtk3.windowGetSize (_window windowElements)
+    status <- Gtk3.toggleButtonGetActive customTB
+    entText <- (Gtk3.entryGetText customEnt) :: IO([Char])
 
-    -- Adding listeners after gui creation does not work
-    --Gtk3.on (_checkCustom windowElements) Gtk3.toggled (onCustomChecked (_hBox windowElements) (_entChord windowElements) (_comboBox windowElements) (_checkCustom windowElements))
-
-    --Gtk3.on _checkCustom windowElements Gtk3.toggled onCustomChecked
-    return ()
-
-fuckOff :: String -> IO(Maybe T.Text)
-fuckOff text = do return (Just (convertText (text :: String) :: T.Text))
-
-toMaybe :: String -> Maybe T.Text
-toMaybe text = Just( toText text )
-
-chooseChord :: String -> IO()
-chooseChord chordType = do
-    if chordType == "Major"
-        then putStrLn "Major"
-        else putStrLn "Minor"
-
-
-onStartButtonClicked :: Gtk3.ComboBox -> Gtk3.ComboBox -> Gtk3.Label -> ([Progression] -> Key -> Octave -> Int -> Int -> IO ()) -> IO()
-onStartButtonClicked comboBox comboBoxMiMa fileLabel createSheet = do
     filepath <- (Gtk3.labelGetText fileLabel) :: IO([Char])
 
     chordTypeText <- Gtk3.comboBoxGetActiveText comboBoxMiMa
     let chordType = convertText((fromMaybe (toText "Major") chordTypeText) :: T.Text) :: String
+    let miMa = chooseChord chordType
 
     coText <- Gtk3.comboBoxGetActiveText comboBox
     let text = fromMaybe (toText "Hi") coText
     let choice = convertText(text :: T.Text) :: String
 
-    case choice of 
-        "Twelve Bar Blues" -> createSheet twelveBarBlues A octave 4 4
-        "Axis of Awesome"-> createSheet axisOfAwesome A octave 4 4
-        "Pessimistic" -> createSheet pessimistic A octave 4 4
-        "Pop"-> createSheet pop1 A octave 4 4
-        "JazzCat" -> createSheet jazzCat A octave 4 4
-        "Pachelbel" -> createSheet pachelbel A octave 4 4
-    putStrLn (show coText)
+    if status
+        then do
+            let chordProg = createChordProgression entText
+            async $ createSheet filepath chordProg key octaveValue miMa barsValue notesValue
+            return ()
+        else do
+            case choice of 
+                "Twelve Bar Blues" -> do
+                    async $ createSheet filepath twelveBarBlues key octaveValue miMa barsValue notesValue
+                "Axis of Awesome"-> do
+                    async $ createSheet filepath axisOfAwesome key octaveValue miMa barsValue notesValue
+                "Pessimistic" -> do 
+                    async $ createSheet filepath pessimistic key octaveValue miMa barsValue notesValue
+                "Pop"-> do 
+                    async $ createSheet filepath pop1 key octaveValue miMa barsValue notesValue
+                "JazzCat" -> do 
+                    async $ createSheet filepath jazzCat key octaveValue miMa barsValue notesValue
+                "Pachelbel" -> do 
+                    async $ createSheet filepath pachelbel key octaveValue miMa barsValue notesValue
+            return ()
 
--- Remove punctuation from text String.
-removePunc :: String -> String
-removePunc xs = [ x | x <- xs, not (x `elem` "\"\'") ]
+-- data Key = A | As | B | C | Cs | D | Ds | E | F | Fs | G | Gs deriving (Enum, Show, Eq, Bounded)
+selectKey :: String -> Key
+selectKey text 
+    | text == "A" = A
+    | text == "As" = As
+    | text == "B" = B
+    | text == "C" = C
+    | text == "Cs" = Cs
+    | text == "D" = D
+    | text == "Ds" = Ds
+    | text == "E" = E
+    | text == "F" = F
+    | text == "Fs" = Fs
+    | text == "G" = G
+    | otherwise = Gs
 
-fixFilePath :: String -> IO(String)
-fixFilePath s = do
-    putStrLn s
-    let a = T.pack ".wav"
-    let b = T.pack $ removePunc s
-    let hasSuffix = T.isInfixOf a b
-    if hasSuffix
-        then return (s)
-        else return (T.unpack $ T.concat [b, a])
+-- Remove " and ' from text String.
+removeParantheses :: String -> String
+removeParantheses xs = [ x | x <- xs, not (x `elem` "\"\'") ]
+
+fixFilePath :: String -> String
+fixFilePath s 
+    | hasSuffix = s
+    | otherwise = T.unpack $ T.concat [b,a]
+    where   hasSuffix = T.isInfixOf a b
+            a = T.pack ".wav"
+            b = T.pack $ removeParantheses s
 
 openSelectFolderDialog :: Gtk3.Window -> Gtk3.Label -> IO()
 openSelectFolderDialog window fileLabel = do
@@ -189,7 +258,7 @@ openSelectFolderDialog window fileLabel = do
         Gtk3.ResponseAccept -> do
             a <- Gtk3.fileChooserGetFilename dialog
             let fileName = fromMaybe (toFilePath defaultPath) a
-            c <- fixFilePath $ show fileName
+            let c = fixFilePath $ show fileName
             Gtk3.labelSetText fileLabel c
         Gtk3.ResponseCancel -> putStrLn "dialog canceled"
         Gtk3.ResponseDeleteEvent -> putStrLn "dialog closed"
@@ -207,5 +276,4 @@ onCustomChecked hbox entry comboBox this = do
             Gtk3.containerRemove hbox entry;
             Gtk3.containerAdd hbox comboBox
         } 
-    putStrLn (show status)
 
