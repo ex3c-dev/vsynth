@@ -9,6 +9,8 @@ import Data.Maybe
 import System.Directory
 import System.Glib.UTFString
 import Foreign.C.String
+import Control.Concurrent.Async
+import Control.Concurrent
 
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -152,15 +154,24 @@ onStartButtonClicked comboBox comboBoxMiMa fileLabel createSheet customTB custom
     if status
         then do
             let chordProg = createChordProgression entText
-            createSheet filepath chordProg A octave miMa 4 4
+            async $ createSheet filepath chordProg A octave miMa 4 4
+            return ()
         else do
             case choice of 
-                "Twelve Bar Blues" -> createSheet filepath twelveBarBlues A octave miMa 4 4
-                "Axis of Awesome"-> createSheet filepath axisOfAwesome A octave miMa 4 4
-                "Pessimistic" -> createSheet filepath pessimistic A octave miMa 4 4
-                "Pop"-> createSheet filepath pop1 A octave miMa 4 4
-                "JazzCat" -> createSheet filepath jazzCat A octave miMa 4 4
-                "Pachelbel" -> createSheet filepath pachelbel A octave miMa 4 4
+                "Twelve Bar Blues" -> do
+                    async $ createSheet filepath twelveBarBlues A octave miMa 4 4
+                "Axis of Awesome"-> do
+                    async $ createSheet filepath axisOfAwesome A octave miMa 4 4
+                "Pessimistic" -> do 
+                    async $ createSheet filepath pessimistic A octave miMa 4 4
+                "Pop"-> do 
+                    async $ createSheet filepath pop1 A octave miMa 4 4
+                "JazzCat" -> do 
+                    async $ createSheet filepath jazzCat A octave miMa 4 4
+                "Pachelbel" -> do 
+                    async $ createSheet filepath pachelbel A octave miMa 4 4
+            return ()
+
 
 -- Remove " and ' from text String.
 removeParantheses :: String -> String
