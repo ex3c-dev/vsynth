@@ -49,7 +49,6 @@ chordScale root octave = createScale root fifthsMScale octave
 
 fifthsMinorScale root octave = createScale root fifthsmScale octave
 
-
 f :: Semitone -> Hz
 f n = pitchStandard * (2 ** (1.0 / 12.0)) ** n
 

@@ -15,7 +15,6 @@ import Control.Concurrent
 import Control.DeepSeq
 import Data.Maybe 
 
-
 arpeggio:: Semitone -> Scale Semitone -> [Beats] -> [Volume] -> [Pulse]
 arpeggio key tscale dur vol = 
     let scale = makeScale tscale key
@@ -45,7 +44,7 @@ chordInMinorProg index k octave
      i :: Semitone 
      i = mapProgToKey2 k index octave
 
---rules for mahor progression
+--rules for major progression
 chordInMajorProgression :: Int -> Key -> Octave -> [Pulse]
 chordInMajorProgression index k octave 
     | index == 1 || index == 4 || index == 5 = triad (i) (majorScale A octave) qn volume
@@ -122,14 +121,13 @@ createBars chordSeq k octave majMin num_bars num_notes = do
     --melodyA <- randomMelody scale num_notes Melody 
     --let melAlt = concat $ replicate (length chordSeq * num_bars) melodyA
 
-        --let melody = voiceProgression chordSeq  k octave majMin num_notes Melody
-        --bass <- voiceProgression chordSeq k octave majMin num_notes Bassline  
-        --chords <- voiceProgression chordSeq k octave majMin num_notes ChordProgression
+    let melody = voiceProgression chordSeq  k octave majMin num_notes Melody
+    let bass = voiceProgression chordSeq k octave majMin num_notes Bassline  
+    let chords = voiceProgression chordSeq k octave majMin num_notes ChordProgression
 
-
-    c1 <- concurrently (voiceProgression chordSeq  k octave majMin num_notes Melody) (voiceProgression chordSeq  k octave majMin num_notes Melody)
-    c2 <- concurrently (voiceProgression chordSeq  k octave majMin num_notes Melody) (voiceProgression chordSeq  k octave majMin num_notes Melody)
-    c3 <- concurrently (voiceProgression chordSeq k octave majMin num_notes Bassline ) (voiceProgression chordSeq k octave majMin num_notes ChordProgression)
+    c1 <- concurrently melody melody
+    c2 <- concurrently melody melody
+    c3 <- concurrently bass chords
 
     let b = concat $ replicate (num_bars) $ fst c3
         chordpattern = concat $ replicate (num_bars) $ snd c3
