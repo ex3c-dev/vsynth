@@ -58,7 +58,7 @@ executable vsynth-exe
   other-modules:
       Functions
       Gui
-      IOShit
+      IOFunctions
       Music
       Structures
       Utils

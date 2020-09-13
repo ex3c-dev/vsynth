@@ -2,7 +2,7 @@ module Music where
 
 import Structures
 import Utils
-import IOShit
+import IOFunctions
 import Lib
 import Functions
 import Control.Monad.Random

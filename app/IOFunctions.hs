@@ -1,4 +1,4 @@
-module IOShit where
+module IOFunctions where
 import Structures
 import Control.Monad ( when, unless )
 import Data.Maybe ( listToMaybe )
