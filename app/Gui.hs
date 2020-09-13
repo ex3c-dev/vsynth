@@ -102,7 +102,7 @@ initialiseGui title = do
     Gtk3.set window [ Gtk3.containerBorderWidth Gtk3.:= 10, Gtk3.windowTitle Gtk3.:= title ]
     Gtk3.entrySetText entChord "1 5 6 4"
     Gtk3.rangeSetValue scaleOct (0.0)
-    Gtk3.spinButtonSetValue spinBars 4
+    Gtk3.spinButtonSetValue spinBars 1
     Gtk3.spinButtonSetValue spinNotes 4
     Gtk3.spinButtonSetValue spinBPM 120
 
@@ -110,7 +110,7 @@ initialiseGui title = do
     Gtk3.containerAdd vBox hBox
     Gtk3.containerAdd vBox hBox4
     Gtk3.containerAdd vBox hBox5
-    Gtk3.containerAdd vBox hBox6
+    --Gtk3.containerAdd vBox hBox6 -- Add later to enable BPM selection
     Gtk3.containerAdd vBox hbuttonbox
     Gtk3.containerAdd vBox hBox3
     Gtk3.containerAdd window vBox
@@ -137,7 +137,7 @@ initialiseGui title = do
     Gtk3.set hbuttonbox [ Gtk3.buttonBoxLayoutStyle Gtk3.:= Gtk3.ButtonboxStart
                            , Gtk3.buttonBoxChildSecondary button2 Gtk3.:= True  ]
 
-    sequence $ setupComboBox comboBox ["Twelve Bar Blues", "Axis of Awesome", "Pessimistic", "Pop", "JazzCat", "Pachelbel"]
+    sequence $ setupComboBox comboBox ["Twelve Bar Blues", "Axis of Awesome", "Pessimistic", "Pop", "JazzCat", "Pachelbel", "Minor Progression"]
     sequence $ setupComboBox comboBox2 ["Major", "Minor"]
     sequence $ setupComboBox comboKey ["A", "As", "B", "C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs"]
 
