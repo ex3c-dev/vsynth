@@ -12,8 +12,6 @@ import Foreign.C.String
 import Control.Concurrent.Async
 import Control.Concurrent
 
-{-# LANGUAGE OverloadedStrings #-}
-
 data GuiElements = GuiElements {
     _window :: Gtk3.Window,
     _hBox :: Gtk3.HBox,
