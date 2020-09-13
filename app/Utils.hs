@@ -6,7 +6,6 @@ import Control.Lens
 import Data.Bool
 
 -- Enum Cycling. Useful to cycle data Key which derives Enum
--- data has to derive Bounded and Eq. Eq checks if it is the last element
 next :: (Eq a, Enum a, Bounded a) => a -> a
 next = bool minBound <$> succ <*> (/= maxBound)
 
@@ -38,7 +37,6 @@ createRandom x n = do
     ret <- getRandomR (n, x)
     return ret
 
--- useful for 12 tone music
 shuffle :: MonadRandom m => [a] -> m [a]
 shuffle x = if length x < 2 then return x else do
     i <- createRandom 0  $ length(x)-1 
@@ -46,6 +44,9 @@ shuffle x = if length x < 2 then return x else do
     return (x!! i : r)
 
 --function to replace element in list
-replace :: Traversable t => t a -> (Int, a) -> t a
-replace line (i,n) = (element i .~ n ) line
+replaceIndex :: Traversable t => t a -> (Int, a) -> t a
+replaceIndex line (i,n) = (element i .~ n ) line
 
+--function to replace elements in list that fulfill boolean expression
+filterReplace :: Traversable t => (Int -> Bool) -> t a -> a -> t a
+filterReplace f line r = over  (elements (f)) (const r) line

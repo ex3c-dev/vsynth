@@ -60,6 +60,7 @@ executable vsynth-exe
       Gui
       IOFunctions
       Music
+      Settings
       Structures
       Utils
       Paths_vsynth

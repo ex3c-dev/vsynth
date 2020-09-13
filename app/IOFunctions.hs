@@ -50,6 +50,10 @@ playFile fileName = do
           when (state == Playing) $
              waitWhilePlaying
    waitWhilePlaying
+   
+
+playIt :: FilePath -> Sheet -> IO ()
+playIt filePath sheet = saveAsWav (_barSeq sheet) filePath
 
 
 showDevice :: DeviceSpecifier -> String
