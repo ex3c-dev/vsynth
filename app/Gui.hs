@@ -212,6 +212,8 @@ onStartButtonClicked comboBox comboBoxMiMa fileLabel createSheet customTB custom
                     async $ createSheet filepath jazzCat key octaveValue miMa barsValue notesValue
                 "Pachelbel" -> do 
                     async $ createSheet filepath pachelbel key octaveValue miMa barsValue notesValue
+                "Minor Progression" -> do 
+                    async $ createSheet filepath minorProg key octaveValue miMa barsValue notesValue
             return ()
 
 -- data Key = A | As | B | C | Cs | D | Ds | E | F | Fs | G | Gs deriving (Enum, Show, Eq, Bounded)
