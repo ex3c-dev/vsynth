@@ -241,8 +241,8 @@ openSelectFolderDialog window fileLabel = do
     defaultPath <- (Gtk3.labelGetText fileLabel) :: IO([Char])
     
     dialog <- Gtk3.fileChooserDialogNew
-        (Just $ "Demo of the standart dialog "
-            ++ "to select a new file")
+        (Just $ "Choose a file to save "
+            ++ "the audio created")
         (Just window)
         Gtk3.FileChooserActionSave
         [   ("Cancel", Gtk3.ResponseCancel),
