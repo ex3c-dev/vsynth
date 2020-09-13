@@ -12,8 +12,6 @@ import Foreign.C.String
 import Control.Concurrent.Async
 import Control.Concurrent
 
-{-# LANGUAGE OverloadedStrings #-}
-
 data GuiElements = GuiElements {
     _window :: Gtk3.Window,
     _hBox :: Gtk3.HBox,
@@ -78,6 +76,7 @@ initialiseGui title = do
     hBox3 <- Gtk3.hBoxNew True 5
     hBox4 <- Gtk3.hBoxNew True 5
     hBox5 <- Gtk3.hBoxNew True 5
+    hBox6 <- Gtk3.hBoxNew True 5
     button1 <- Gtk3.buttonNewWithLabel "Select output directory"
     button2 <- Gtk3.buttonNewWithLabel "Create File"
     comboBox <- Gtk3.comboBoxNewText
@@ -90,24 +89,28 @@ initialiseGui title = do
     labFolderHead <- Gtk3.labelNew (Just "Filename:")
     labBars <- Gtk3.labelNew (Just "Bars:")
     labNotes <- Gtk3.labelNew (Just "Notes:")
+    labBPM <- Gtk3.labelNew (Just "BPM:")
     labFolder <- Gtk3.labelNew (Just filepath)
     checkCustom <- Gtk3.checkButtonNewWithLabel "Custom Mode"
     scaleOct <- Gtk3.hScaleNewWithRange (-2.0) (2.0) (1.0)
     spinBars <- Gtk3.spinButtonNewWithRange 1 20 1
     spinNotes <- Gtk3.spinButtonNewWithRange 1 20 1
+    spinBPM <- Gtk3.spinButtonNewWithRange 60 200 1
 
     -- Setup GUI elements
     Gtk3.on window Gtk3.objectDestroy Gtk3.mainQuit
     Gtk3.set window [ Gtk3.containerBorderWidth Gtk3.:= 10, Gtk3.windowTitle Gtk3.:= title ]
     Gtk3.entrySetText entChord "1 5 6 4"
     Gtk3.rangeSetValue scaleOct (0.0)
-    Gtk3.spinButtonSetValue spinBars 4
+    Gtk3.spinButtonSetValue spinBars 1
     Gtk3.spinButtonSetValue spinNotes 4
+    Gtk3.spinButtonSetValue spinBPM 120
 
     Gtk3.containerAdd vBox hBox2
     Gtk3.containerAdd vBox hBox
     Gtk3.containerAdd vBox hBox4
     Gtk3.containerAdd vBox hBox5
+    --Gtk3.containerAdd vBox hBox6 -- Add later to enable BPM selection
     Gtk3.containerAdd vBox hbuttonbox
     Gtk3.containerAdd vBox hBox3
     Gtk3.containerAdd window vBox
@@ -124,6 +127,8 @@ initialiseGui title = do
     Gtk3.containerAdd hBox5 spinBars
     Gtk3.containerAdd hBox5 labNotes
     Gtk3.containerAdd hBox5 spinNotes
+    Gtk3.containerAdd hBox6 labBPM
+    Gtk3.containerAdd hBox6 spinBPM
     Gtk3.containerAdd hBox3 labFolderHead
     Gtk3.containerAdd hBox3 labFolder
     
@@ -132,7 +137,7 @@ initialiseGui title = do
     Gtk3.set hbuttonbox [ Gtk3.buttonBoxLayoutStyle Gtk3.:= Gtk3.ButtonboxStart
                            , Gtk3.buttonBoxChildSecondary button2 Gtk3.:= True  ]
 
-    sequence $ setupComboBox comboBox ["Twelve Bar Blues", "Axis of Awesome", "Pessimistic", "Pop", "JazzCat", "Pachelbel"]
+    sequence $ setupComboBox comboBox ["Twelve Bar Blues", "Axis of Awesome", "Pessimistic", "Pop", "JazzCat", "Pachelbel", "Minor Progression"]
     sequence $ setupComboBox comboBox2 ["Major", "Minor"]
     sequence $ setupComboBox comboKey ["A", "As", "B", "C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs"]
 
@@ -142,7 +147,7 @@ initialiseGui title = do
 
     -- Setup event handlers
     Gtk3.on button1 Gtk3.buttonActivated $ openSelectFolderDialog window labFolder
-    Gtk3.on button2 Gtk3.buttonActivated $ onStartButtonClicked comboBox comboBox2 labFolder createSheet checkCustom entChord comboKey scaleOct spinBars spinNotes
+    Gtk3.on button2 Gtk3.buttonActivated $ onStartButtonClicked comboBox comboBox2 labFolder createSheet checkCustom entChord comboKey scaleOct spinBars spinNotes spinBPM
     Gtk3.on checkCustom Gtk3.toggled (onCustomChecked hBox entChord comboBox checkCustom)
 
     -- Finish GUI setup
@@ -162,8 +167,8 @@ createChordProgression :: String -> [Int]
 createChordProgression input = map (read::String->Int) list
     where list = words input
 
-onStartButtonClicked :: Gtk3.ComboBox -> Gtk3.ComboBox -> Gtk3.Label -> (FilePath -> [Progression] -> Key -> Octave -> MajMin-> Int -> NumNotes -> IO ()) -> Gtk3.CheckButton -> Gtk3.Entry -> Gtk3.ComboBox -> Gtk3.HScale -> Gtk3.SpinButton -> Gtk3.SpinButton -> IO()
-onStartButtonClicked comboBox comboBoxMiMa fileLabel createSheet customTB customEnt comboKeys scaleOctave spinBars spinNotes = do
+onStartButtonClicked :: Gtk3.ComboBox -> Gtk3.ComboBox -> Gtk3.Label -> (FilePath -> [Progression] -> Key -> Octave -> MajMin-> Int -> NumNotes -> IO ()) -> Gtk3.CheckButton -> Gtk3.Entry -> Gtk3.ComboBox -> Gtk3.HScale -> Gtk3.SpinButton -> Gtk3.SpinButton -> Gtk3.SpinButton -> IO()
+onStartButtonClicked comboBox comboBoxMiMa fileLabel createSheet customTB customEnt comboKeys scaleOctave spinBars spinNotes spinBPM = do
     keysText <- Gtk3.comboBoxGetActiveText comboKeys
     let selKey = convertText((fromMaybe (toText "A") keysText) :: T.Text) :: String
     let key = selectKey selKey
@@ -173,10 +178,11 @@ onStartButtonClicked comboBox comboBoxMiMa fileLabel createSheet customTB custom
 
     barsValue <- Gtk3.spinButtonGetValueAsInt spinBars
     notesValue <- Gtk3.spinButtonGetValueAsInt spinNotes
+    bpmValue <- Gtk3.spinButtonGetValue spinBPM
+    let bpm = (realToFrac bpmValue) :: Float
     
     status <- Gtk3.toggleButtonGetActive customTB
     entText <- (Gtk3.entryGetText customEnt) :: IO([Char])
-
     filepath <- (Gtk3.labelGetText fileLabel) :: IO([Char])
 
     chordTypeText <- Gtk3.comboBoxGetActiveText comboBoxMiMa
@@ -241,8 +247,8 @@ openSelectFolderDialog window fileLabel = do
     defaultPath <- (Gtk3.labelGetText fileLabel) :: IO([Char])
     
     dialog <- Gtk3.fileChooserDialogNew
-        (Just $ "Demo of the standart dialog "
-            ++ "to select a new file")
+        (Just $ "Choose a file to save "
+            ++ "the audio created")
         (Just window)
         Gtk3.FileChooserActionSave
         [   ("Cancel", Gtk3.ResponseCancel),
