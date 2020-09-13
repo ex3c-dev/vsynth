@@ -16,11 +16,5 @@ pitchStandard = 440.0
 bpm :: Beats
 bpm = 120.0
 
-beatDuration :: Seconds
-beatDuration =  60.0 / bpm
-
-beat :: Float -> Beats
-beat n = beatDuration * n
-
 qn :: Beats
 qn = 1

@@ -171,7 +171,7 @@ onStartButtonClicked :: Gtk3.ComboBox -> Gtk3.ComboBox -> Gtk3.Label -> (FilePat
 onStartButtonClicked comboBox comboBoxMiMa fileLabel createSheet customTB customEnt comboKeys scaleOctave spinBars spinNotes spinBPM = do
     keysText <- Gtk3.comboBoxGetActiveText comboKeys
     let selKey = convertText((fromMaybe (toText "A") keysText) :: T.Text) :: String
-    let key = selectKey selKey
+        key = selectKey selKey
 
     octaveRangeValue <- Gtk3.rangeGetValue scaleOctave
     let octaveValue = (realToFrac octaveRangeValue) :: Float
@@ -187,11 +187,11 @@ onStartButtonClicked comboBox comboBoxMiMa fileLabel createSheet customTB custom
 
     chordTypeText <- Gtk3.comboBoxGetActiveText comboBoxMiMa
     let chordType = convertText((fromMaybe (toText "Major") chordTypeText) :: T.Text) :: String
-    let miMa = chooseChord chordType
+        miMa = chooseChord chordType
 
     coText <- Gtk3.comboBoxGetActiveText comboBox
-    let text = fromMaybe (toText "Hi") coText
-    let choice = convertText(text :: T.Text) :: String
+    let text = fromMaybe (toText "Twelve Bar Blues") coText
+        choice = convertText(text :: T.Text) :: String
 
     if status
         then do
@@ -216,7 +216,6 @@ onStartButtonClicked comboBox comboBoxMiMa fileLabel createSheet customTB custom
                     async $ createSheet filepath minorProg key octaveValue miMa barsValue notesValue
             return ()
 
--- data Key = A | As | B | C | Cs | D | Ds | E | F | Fs | G | Gs deriving (Enum, Show, Eq, Bounded)
 selectKey :: String -> Key
 selectKey text 
     | text == "A" = A
@@ -266,7 +265,7 @@ openSelectFolderDialog window fileLabel = do
         Gtk3.ResponseAccept -> do
             a <- Gtk3.fileChooserGetFilename dialog
             let fileName = fromMaybe (toFilePath defaultPath) a
-            let c = fixFilePath $ show fileName
+                c = fixFilePath $ show fileName
             Gtk3.labelSetText fileLabel c
         Gtk3.ResponseCancel -> putStrLn "dialog canceled"
         Gtk3.ResponseDeleteEvent -> putStrLn "dialog closed"

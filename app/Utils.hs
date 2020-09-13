@@ -12,16 +12,17 @@ next = bool minBound <$> succ <*> (/= maxBound)
 prev :: (Eq a, Enum a, Bounded a) => a -> a
 prev = bool maxBound <$> pred <*> (/= minBound)
 
---helper functon to avoid exceeding maximum beats in bar
+--Helper function to avoid exceeding maximum beats in bar
 listSumCeiling :: (Ord a, Num a) => [a] -> a -> [a]
 listSumCeiling list n = takeWhile (< n) $ scanl1 (+) list
 
+-- picks n random numbers from a list
 pickNRandom:: MonadRandom m => [a] -> Int -> m [a]
 pickNRandom line n = do
     list <- createRandomList (length line - 1) n  
     return $ [line !! x | x <- list]
 
--- creates Random list such that sum is under certain number
+-- Creates a r andom list such that sum is < n
 pickNSumCeiling:: MonadRandom m => [a] -> Int -> m [a]
 pickNSumCeiling line n = do
     list <- createRandomList (length line - 1) n 
@@ -43,6 +44,6 @@ shuffle x = if length x < 2 then return x else do
     r <- shuffle (take i x ++ drop (i+1) x)
     return (x!! i : r)
 
---function to replace elements in list that fulfill boolean expression
+--Function to replace elements in list that fulfill passed-on boolean expression
 filterReplace :: Traversable t => (Int -> Bool) -> t a -> a -> t a
 filterReplace f line r = over  (elements (f)) (const r) line

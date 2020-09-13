@@ -22,13 +22,13 @@ createScale root intervals octave = Scale $ makeKey intervals root octave
 makeScale :: Scale Semitone -> Semitone -> Scale Semitone
 makeScale scale i = Scale $ map (\x -> x + i) (intervals scale)
 
---subtract the chord we want to go to from the current chord to get an offset.
-transposeScale2 :: Scale Semitone -> Semitone -> Key-> Scale Semitone
-transposeScale2 scale i k = Scale $ map (\x -> x + (i - key k )) (intervals scale)
+-- Transposes scale to another key
+transposeScale :: Scale Semitone -> Semitone -> Key-> Scale Semitone
+transposeScale scale i k = Scale $ map (\x -> x + (i - key k )) (intervals scale)
 
--- returns key from a chord progression indice
-mapProgToKey2 :: Key -> Int -> Octave -> Semitone
-mapProgToKey2 k indice octave =
+-- Returns key from a chord progression indice
+mapProgToKey :: Key -> Int -> Octave -> Semitone
+mapProgToKey k indice octave =
     let scale = majorScale k octave
     in ((intervals scale) !! (indice -1)) -1
 
@@ -48,6 +48,12 @@ augmentedScale root octave = createScale root augScale octave
 chordScale root octave = createScale root fifthsMScale octave
 
 fifthsMinorScale root octave = createScale root fifthsmScale octave
+
+beatDuration :: Seconds
+beatDuration =  60.0 / bpm
+
+beat :: Float -> Beats
+beat n = beatDuration * n
 
 f :: Semitone -> Hz
 f n = pitchStandard * (2 ** (1.0 / 12.0)) ** n
