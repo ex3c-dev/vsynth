@@ -65,10 +65,6 @@ arpeggioInMajorProgression index k octave
      i :: Semitone
      i = mapProgToKey2 k index octave 
 
--- Function that creates a progression 
-createProgressionBar :: (Int -> Key ->  Octave -> [Pulse]) -> [Progression] -> Key  -> Octave-> [Pulse]
-createProgressionBar f prog key octave = concat [concat $ replicate 4 $ f i key octave| i <- prog] 
-
 --alternative melody creation that plays in root key over all bars
 randomMelody :: MonadRandom m => Scale Semitone -> Int -> p -> m [Pulse]
 randomMelody scale num_notes voices = do
@@ -96,6 +92,10 @@ walkingBass scale octave num_notes voices = do
     l <- pickNRandom (intervals scale) 2
     let line = [(intervals scale !! 0)] ++ l ++ [(intervals scale !! 0)]
     return $ makeNote line (replicate 4 1) (replicate 4 0.1) 
+
+-- Function that creates a progression 
+createProgressionBar :: (Int -> Key ->  Octave -> [Pulse]) -> [Progression] -> Key  -> Octave-> [Pulse]
+createProgressionBar f prog key octave = concat [concat $ replicate 4 $ f i key octave| i <- prog] 
 
 --Let a voice follow over a chord Progression
 voiceProgression :: MonadRandom m => [Int] -> Key -> Octave -> MajMin -> Int -> Voice -> m [Pulse]

@@ -43,10 +43,6 @@ shuffle x = if length x < 2 then return x else do
     r <- shuffle (take i x ++ drop (i+1) x)
     return (x!! i : r)
 
---function to replace element in list
-replaceIndex :: Traversable t => t a -> (Int, a) -> t a
-replaceIndex line (i,n) = (element i .~ n ) line
-
 --function to replace elements in list that fulfill boolean expression
 filterReplace :: Traversable t => (Int -> Bool) -> t a -> a -> t a
 filterReplace f line r = over  (elements (f)) (const r) line
